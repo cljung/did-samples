@@ -35,6 +35,11 @@ msbuild.log
 msbuild.err
 msbuild.wrn
 
+# VS Publish files
+[Pp]publis[Pp]rofiles/
+[Ss]ervice[Dd]ependencies/
+*.pubxml
+
 # Visual Studio 2015
 .vs/
 
