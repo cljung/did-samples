@@ -1,0 +1,274 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TrustFrameworkPolicy xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://schemas.microsoft.com/online/cpim/schemas/2013/06" PolicySchemaVersion="0.3.0.0" 
+TenantId="yourtenant.onmicrosoft.com" PolicyId="B2C_1A_VC_TrustFrameworkExtensions" 
+PublicPolicyUri="http://yourtenant.onmicrosoft.com/B2C_1A_VC_TrustFrameworkExtensions">
+  <BasePolicy>
+    <TenantId>yourtenant.onmicrosoft.com</TenantId>
+    <PolicyId>B2C_1A_VC_TrustFrameworkBase</PolicyId>
+  </BasePolicy>
+  <BuildingBlocks>
+    <ClaimsSchema>
+      <!-- VCServiceUrl - we send the url for the node.js verifier app to the browser in this claim -->
+      <ClaimType Id="VCServiceUrl">
+        <DisplayName>VCServiceUrl</DisplayName>
+        <DataType>string</DataType>
+        <UserHelpText>VV Service Url</UserHelpText>
+        <UserInputType>TextBox</UserInputType>
+      </ClaimType>
+      <!-- State Id between backend and Authenticator app. We use it to pull the auth result-->
+      <ClaimType Id="VCStateId">
+        <DisplayName>VCStateId</DisplayName>
+        <DataType>string</DataType>
+        <UserHelpText>Verifiable Credentials State Id</UserHelpText>
+        <UserInputType>TextBox</UserInputType>
+      </ClaimType>
+      <!-- Claims that we get from the VC Verifier -->
+      <ClaimType Id="VCCredentialType">
+        <DisplayName>VCCredentialType</DisplayName>
+        <DataType>string</DataType>
+        <UserHelpText>Verifiable Credentials Credential Type</UserHelpText>
+        <UserInputType>TextBox</UserInputType>
+      </ClaimType>
+      <ClaimType Id="VCSubject">
+        <DisplayName>VCSubject</DisplayName>
+        <DataType>string</DataType>
+        <UserHelpText>Verifiable Credentials sub</UserHelpText>
+        <UserInputType>TextBox</UserInputType>
+      </ClaimType>
+      <ClaimType Id="VCIssuer">
+        <DisplayName>VCIssuer</DisplayName>
+        <DataType>string</DataType>
+        <UserHelpText>Verifiable Credentials iss</UserHelpText>
+        <UserInputType>TextBox</UserInputType>
+      </ClaimType>
+      <ClaimType Id="VCKey">
+        <DisplayName>VCKey</DisplayName>
+        <DataType>string</DataType>
+        <UserHelpText>Verifiable Credentials key</UserHelpText>
+        <UserInputType>TextBox</UserInputType>
+      </ClaimType>
+      <!-- VCKey persisted as a signInName (identities in MS Grap API)-->
+      <ClaimType Id="signInNames.vcid">
+        <DisplayName>signInNames.vcid</DisplayName>
+        <DataType>string</DataType>
+      </ClaimType>
+    </ClaimsSchema>
+    <ContentDefinitions>
+      <!-- This content definition is to render an error page that displays unhandled errors. -->
+      <ContentDefinition Id="api.error">
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:globalexception:1.2.0</DataUri>
+      </ContentDefinition>
+      <ContentDefinition Id="api.idpselections">
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:providerselection:1.2.0</DataUri>
+      </ContentDefinition>
+      <ContentDefinition Id="api.idpselections.signup">
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:providerselection:1.2.0</DataUri>
+      </ContentDefinition>
+      <ContentDefinition Id="api.selfasserted">
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.0</DataUri>
+      </ContentDefinition>
+      <ContentDefinition Id="api.selfasserted.profileupdate">
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.0</DataUri>
+      </ContentDefinition>
+      <ContentDefinition Id="api.localaccountsignup">
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.0</DataUri>
+      </ContentDefinition>
+      <ContentDefinition Id="api.localaccountpasswordreset">
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.0</DataUri>
+      </ContentDefinition>
+      <!-- These two pages uses custom html -->
+      <ContentDefinition Id="api.signuporsignin">
+        <LoadUri>https://yourstorageaccount.blob.core.windows.net/uxcust/templates/vc/unified.html</LoadUri>
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:unifiedssp:2.1.0</DataUri>
+        <!-- added -->
+        <LocalizedResourcesReferences MergeBehavior="Prepend">
+          <LocalizedResourcesReference Language="en" LocalizedResourcesReferenceId="api.signuporsignin.en" />
+        </LocalizedResourcesReferences>
+        <!-- added -->
+      </ContentDefinition>
+      <ContentDefinition Id="api.selfasserted.vc">
+        <LoadUri>https://yourstorageaccount.blob.core.windows.net/uxcust/templates/vc/selfAsserted.html</LoadUri>
+        <RecoveryUri>~/common/default_page_error.html</RecoveryUri>
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.0</DataUri>
+        <Metadata>
+          <Item Key="DisplayName">Verifiable Credentials Signin</Item>
+        </Metadata>
+      </ContentDefinition>
+    </ContentDefinitions>
+    <Localization Enabled="true">
+      <SupportedLanguages DefaultLanguage="en" MergeBehavior="ReplaceAll">
+        <SupportedLanguage>en</SupportedLanguage>
+      </SupportedLanguages>
+      <LocalizedResources Id="api.signuporsignin.en">
+        <LocalizedStrings>
+          <LocalizedString ElementType="UxElement" StringId="local_intro_generic">Sign in to your account</LocalizedString>
+          <LocalizedString ElementType="UxElement" StringId="social_intro">Other ways to login</LocalizedString>
+        </LocalizedStrings>
+      </LocalizedResources>
+    </Localization>
+  </BuildingBlocks>
+  <ClaimsProviders>
+    <ClaimsProvider>
+      <DisplayName>Facebook</DisplayName>
+      <TechnicalProfiles>
+        <TechnicalProfile Id="Facebook-OAUTH">
+          <Metadata>
+            <Item Key="client_id">abc123</Item>  <!-- TODO: change this if you plan to support facebook login -->
+            <Item Key="scope">email public_profile</Item>
+            <Item Key="ClaimsEndpoint">https://graph.facebook.com/me?fields=id,first_name,last_name,name,email</Item>
+          </Metadata>
+        </TechnicalProfile>
+      </TechnicalProfiles>
+    </ClaimsProvider>
+    <ClaimsProvider>
+      <DisplayName>Local Account SignIn</DisplayName>
+      <TechnicalProfiles>
+        <TechnicalProfile Id="login-NonInteractive">
+          <Metadata>
+            <Item Key="client_id">ProxyIdentityExperienceFrameworkAppId</Item>  <!-- TODO: change this -->
+            <!-- ProxyIdentityExperienceFramework AppId -->
+            <Item Key="IdTokenAudience">IdentityExperienceFrameworkAppId</Item> <!-- TODO: change this -->
+            <!-- IdentityExperienceFramework AppId -->
+          </Metadata>
+          <InputClaims>
+            <InputClaim ClaimTypeReferenceId="client_id" DefaultValue="ProxyIdentityExperienceFrameworkAppId" /> <!-- TODO: change this -->
+            <!-- ProxyIdentityExperienceFramework AppId -->
+            <InputClaim ClaimTypeReferenceId="resource_id" PartnerClaimType="resource" DefaultValue="IdentityExperienceFrameworkAppId" /> <!-- TODO: change this -->
+            <!-- IdentityExperienceFramework AppId -->
+          </InputClaims>
+        </TechnicalProfile>
+      </TechnicalProfiles>
+    </ClaimsProvider>
+
+    <ClaimsProvider>
+      <DisplayName>Local Account</DisplayName>
+      <TechnicalProfiles>
+        <TechnicalProfile Id="SelfAsserted-LocalAccountSignin-Email-Only">
+          <Metadata>
+            <Item Key="setting.showSignupLink">false</Item>
+            <Item Key="setting.forgotPasswordLinkLocation">None</Item>
+          </Metadata>
+          <IncludeTechnicalProfile ReferenceId="SelfAsserted-LocalAccountSignin-Email" />
+        </TechnicalProfile>
+      </TechnicalProfiles>
+    </ClaimsProvider>
+
+    <!-- Claims Provider for Signin via VC UX -->
+    <ClaimsProvider>
+      <DisplayName>Self Asserted</DisplayName>
+      <TechnicalProfiles>
+        <!-- Signing in with a VC when VC isn't linked to a B2C account -->
+        <TechnicalProfile Id="SelfAsserted-VCSigninNoObject">
+          <DisplayName>Verifiable Credentials</DisplayName>
+          <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.SelfAssertedAttributeProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+          <Metadata>
+            <Item Key="ContentDefinitionReferenceId">api.selfasserted.vc</Item>
+            <Item Key="setting.showCancelButton">false</Item>
+          </Metadata>
+          <IncludeInSso>false</IncludeInSso>
+          <InputClaims>
+            <InputClaim ClaimTypeReferenceId="VCStateId" />
+            <!-- if you change this one, you need to change the ServiceUrl for the REST API below -->
+            <InputClaim ClaimTypeReferenceId="VCServiceUrl" AlwaysUseDefaultValue="true" DefaultValue="https://yourappname.azurewebsites.net/api/verifier" />
+            <!--<InputClaim ClaimTypeReferenceId="VCServiceUrl" AlwaysUseDefaultValue="true" DefaultValue="https://a8d1a862ded5.ngrok.io/api/verifier" />-->
+          </InputClaims>
+          <DisplayClaims>
+            <DisplayClaim ClaimTypeReferenceId="VCStateId" />
+            <DisplayClaim ClaimTypeReferenceId="VCServiceUrl" />
+          </DisplayClaims>
+          <OutputClaims>
+            <OutputClaim ClaimTypeReferenceId="displayName" />
+            <OutputClaim ClaimTypeReferenceId="givenName" />
+            <OutputClaim ClaimTypeReferenceId="surName" />
+            <OutputClaim ClaimTypeReferenceId="VCCredentialType" />
+            <OutputClaim ClaimTypeReferenceId="VCCredentialType" />
+            <OutputClaim ClaimTypeReferenceId="VCSubject" />
+            <OutputClaim ClaimTypeReferenceId="VCIssuer" />
+            <OutputClaim ClaimTypeReferenceId="VCKey" />
+            <OutputClaim ClaimTypeReferenceId="objectId" />
+            <OutputClaim ClaimTypeReferenceId="email" />
+            <OutputClaim ClaimTypeReferenceId="identityProvider" DefaultValue="DID" />
+            <OutputClaim ClaimTypeReferenceId="authenticationSource" DefaultValue="localAccountAuthentication" />
+          </OutputClaims>
+          <ValidationTechnicalProfiles>
+            <ValidationTechnicalProfile ReferenceId="REST-VC-GetAuthResult" />
+          </ValidationTechnicalProfiles>
+        </TechnicalProfile>
+
+        <!-- Signing in with a VC when VC references a B2C account -->
+        <TechnicalProfile Id="SelfAsserted-VCSigninWithObject">
+          <DisplayName>Verifiable Credentials</DisplayName>
+          <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.SelfAssertedAttributeProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+          <Metadata>
+            <Item Key="ContentDefinitionReferenceId">api.selfasserted.vc</Item>
+            <Item Key="setting.showCancelButton">false</Item>
+          </Metadata>
+          <IncludeInSso>false</IncludeInSso>
+          <InputClaims>
+            <InputClaim ClaimTypeReferenceId="VCStateId" />
+            <!-- if you change this one, you need to change the ServiceUrl for the REST API below -->
+            <InputClaim ClaimTypeReferenceId="VCServiceUrl" AlwaysUseDefaultValue="true" DefaultValue="https://yourappname.azurewebsites.net/api/verifier" />
+            <!--<InputClaim ClaimTypeReferenceId="VCServiceUrl" AlwaysUseDefaultValue="true" DefaultValue="https://a8d1a862ded5.ngrok.io/api/verifier" />-->
+          </InputClaims>
+          <DisplayClaims>
+            <DisplayClaim ClaimTypeReferenceId="VCStateId" />
+            <DisplayClaim ClaimTypeReferenceId="VCServiceUrl" />
+          </DisplayClaims>
+          <OutputClaims>
+            <OutputClaim ClaimTypeReferenceId="displayName" />
+            <OutputClaim ClaimTypeReferenceId="givenName" />
+            <OutputClaim ClaimTypeReferenceId="surName" />
+            <OutputClaim ClaimTypeReferenceId="VCCredentialType" />
+            <OutputClaim ClaimTypeReferenceId="VCCredentialType" />
+            <OutputClaim ClaimTypeReferenceId="VCSubject" />
+            <OutputClaim ClaimTypeReferenceId="VCIssuer" />
+            <OutputClaim ClaimTypeReferenceId="VCKey" />
+            <OutputClaim ClaimTypeReferenceId="objectId" />
+            <OutputClaim ClaimTypeReferenceId="email" />
+            <OutputClaim ClaimTypeReferenceId="identityProvider" DefaultValue="DID" />
+            <OutputClaim ClaimTypeReferenceId="authenticationSource" DefaultValue="localAccountAuthentication" />
+          </OutputClaims>
+          <ValidationTechnicalProfiles>
+            <ValidationTechnicalProfile ReferenceId="REST-VC-GetAuthResult" />
+            <!-- make sure the user exists in the directory -->
+            <ValidationTechnicalProfile ReferenceId="AAD-UserReadUsingObjectId" />
+          </ValidationTechnicalProfiles>
+        </TechnicalProfile>
+      </TechnicalProfiles>
+    </ClaimsProvider>
+    <!-- REST API Claims Provider -->
+    <ClaimsProvider>
+      <DisplayName>REST API</DisplayName>
+      <TechnicalProfiles>
+        <TechnicalProfile Id="REST-VC-GetAuthResult">
+          <DisplayName>Verifiable Credentials Authentication Result</DisplayName>
+          <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.RestfulProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+          <Metadata>
+            <!-- TODO: change the url -->
+            <Item Key="ServiceUrl">https://yourappname.azurewebsites.net/api/verifier/presentation-response-b2c</Item>
+            <!--<Item Key="ServiceUrl">https://a8d1a862ded5.ngrok.io/api/verifier/presentation-response-b2c</Item>-->
+            <Item Key="AuthenticationType">None</Item>
+            <Item Key="SendClaimsIn">Body</Item>
+          </Metadata>
+          <InputClaims>
+            <InputClaim ClaimTypeReferenceId="VCStateId" PartnerClaimType="id" />
+            <!-- Key to auth result. Comes from the UX -->
+          </InputClaims>
+          <OutputClaims>
+            <OutputClaim ClaimTypeReferenceId="displayName" />
+            <OutputClaim ClaimTypeReferenceId="givenName" />
+            <OutputClaim ClaimTypeReferenceId="surName" />
+            <OutputClaim ClaimTypeReferenceId="VCCredentialType" PartnerClaimType="credentialType" />
+            <OutputClaim ClaimTypeReferenceId="VCSubject" PartnerClaimType="sub" />
+            <OutputClaim ClaimTypeReferenceId="VCIssuer" PartnerClaimType="iss" />
+            <OutputClaim ClaimTypeReferenceId="VCKey" PartnerClaimType="key" />
+            <OutputClaim ClaimTypeReferenceId="objectId" PartnerClaimType="oid" />
+            <OutputClaim ClaimTypeReferenceId="email" PartnerClaimType="username" />
+            <OutputClaim ClaimTypeReferenceId="identityProvider" DefaultValue="DID" AlwaysUseDefaultValue="true" />
+          </OutputClaims>
+          <UseTechnicalProfileForSessionManagement ReferenceId="SM-Noop" />
+        </TechnicalProfile>
+      </TechnicalProfiles>
+    </ClaimsProvider>
+  </ClaimsProviders>
+</TrustFrameworkPolicy>

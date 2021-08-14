@@ -1,0 +1,50 @@
+{
+    "default": {
+      "locale": "en-US",
+      "card": {
+        "title": "Yourname Membership",
+        "issuedBy": "yourtenant",
+        "backgroundColor": "#B8CEC1",
+        "textColor": "#ffffff",
+        "logo": {
+          "uri": "https://yourstorageaccount.blob.core.windows.net/uxcust/templates/images/snoopy-small.jpg",
+          "description": "yourtenant Logo"
+        },
+        "description": "Use your verified credential card to prove you are a yourtenant member."
+      },
+      "consent": {
+        "title": "Do you want to get your yourtenant membership card?",
+        "instructions": "Sign in with your account to get your card."
+      },
+      "claims": {
+        "vc.credentialSubject.firstName": {
+          "type": "String",
+          "label": "First name"
+        },
+        "vc.credentialSubject.lastName": {
+          "type": "String",
+          "label": "Last name"
+        },
+        "vc.credentialSubject.country": {
+          "type": "String",
+          "label": "Country"
+        },
+        "vc.credentialSubject.sub": {
+          "type": "String",
+          "label": "sub"
+        },
+        "vc.credentialSubject.tid": {
+          "type": "String",
+          "label": "tid"
+        },
+        "vc.credentialSubject.displayName": {
+          "type": "String",
+          "label": "displayName"
+        },
+        "vc.credentialSubject.username": {
+          "type": "String",
+          "label": "username"
+        }
+      }
+    }
+  }
