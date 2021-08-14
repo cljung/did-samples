@@ -16,7 +16,7 @@ Please read the top level [README.md](https://github.com/cljung/did-samples) for
 To run the sample issuer standalone, just clone the repository, compile & run it. It's callback endpoint must be publically reachable, and for that reason, use `ngrok` as a reverse proxy to read your app.
 
 ```Powershell
-git clone https://github.com/cljung/client-api-test-service-nodejs.git
+git clone https://github.com/cljung/did-samples.git
 cd did-samples/api-nodejs
 cd issuer
 npm install

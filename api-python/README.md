@@ -17,7 +17,7 @@ To run the sample standalone, just clone the repository, compile & run it. It's 
 
 ```Powershell
 git clone https://github.com/cljung/did-samples.git
-cd did-samples/api-python/issuer
+cd did-samples/api-python
 cd issuer
 pip install -r requirements.txt
 python app.py ./issuance_request_config_v2.json
