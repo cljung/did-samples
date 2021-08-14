@@ -1,0 +1,164 @@
+<!-- Copyright (c) Microsoft Corporation. All rights reserved.
+     Licensed under the MIT License. -->
+
+     <html lang="en">
+
+        <head>
+            <meta charset="utf-8">
+            <title>NinjaCard Credential</title>
+            <meta name="description" content="NinjaCard Verifiable Credentials">
+            <meta name="author" content="Microsoft">
+            <link rel="stylesheet" href="styles.css">
+            <link rel="icon" href="favicon.png">
+          
+        </head>
+        
+        <body>
+            <div id="wrap">
+            <h3>API</h3>
+            <div style="text-align: center;">
+                <!--<img id="vcLogo" src="ninja-icon.png" height=200px; />-->
+                <img id="vcLogo" src="logo.png" height=200px; />
+                <h1 id="vcType">NinjaCard Credential Issuance</h1>
+                <h3 id="vcDescription"></h3>
+                <div id="message-wrapper" class="margin-bottom-75 margin-top-75" style="display: none">
+                    <i class="fas fa-user-check green icon-text-large margin-bottom-25"></i>
+                    <div id="message"></div>
+                </div>
+
+                <div id="selfAssertedClaims" class="entry" style="display:none;">
+                    <div class="entry-item" id="selfAssertedClaims1">
+                        <label id="label-entry1" for="entry1">Entry 1</label>
+                        <input type="text" id="entry1" name="entry1" pattern="" placeholder="entry1" value="">
+                    </div>
+                    <div class="entry-item" id="selfAssertedClaims2">
+                        <label id="label-entry2" for="entry2">Entry 2</label>
+                        <input type="text" id="entry2" name="entry2" pattern="" placeholder="entry2" value="">
+                    </div>
+                    <p/>
+                </div>
+
+            <button type="button" id="sign-in" class="button">GET CREDENTIAL</button>
+            <div id="qrText"  style="display:none;">
+                <p class="small-text">
+                    <img src="authenticator-icon.png" alt="Authenticator icon" class="icon-small"><br>
+                    Scan with Microsoft Authenticator
+                </p>
+            </div>
+            <a id="deeplink" style="display: none;margin-top: 10px;">Tap to open Authenticator on mobile</a>
+            <div id="qrcodeFrame" style="background:white;display:none">
+                <div id="qrcode" style="text-align: center; padding:25px"></div>
+            </div>
+            <div id="pinCodeText" style="display: none"></div>
+        
+            <script src="qrcode.min.js"></script>
+            <script>
+                var signIn = document.getElementById('sign-in');
+                var signOut = document.getElementById('sign-out');
+                var display = document.getElementById('display');
+                var qrcode = new QRCode("qrcode", { width: 300, height: 300 });
+        
+                var respIssuanceReq = null;
+                signIn.addEventListener('click', () => {
+                    // add self asserted claims, if any
+                    var queryStrings = "";
+                    if (selfAssertedClaims) {
+                        var idx = 0;
+                        var sep = "?";
+                        for (var claimName in selfAssertedClaims) {
+                            idx++;
+                            queryStrings += sep + claimName + "=" + document.getElementById('entry' + idx).value;
+                            sep = "&";
+                        };
+                    }
+
+                    fetch( 'issue-request-api' + queryStrings )
+                    .then(response => response.text())
+                    .catch(error => document.getElementById("message").innerHTML = error)
+                    .then(response => {
+                        if (response.length > 0) {
+                            //console.log(response)
+                            respIssuanceReq = JSON.parse(response);
+                            qrcode.makeCode(respIssuanceReq.url);                            
+                            document.getElementById('sign-in').style.display = "none";
+                            document.getElementById('qrText').style.display = "block";
+                            document.getElementById('qrcodeFrame').style.display = "block";
+                            if (respIssuanceReq.pin) {
+                                document.getElementById('pinCodeText').innerHTML = "Pin code: " + respIssuanceReq.pin;
+                                document.getElementById('pinCodeText').style.display = "block";
+                            }
+                            document.getElementById('selfAssertedClaims').style.display = "none";
+                            
+                        }
+                    })
+
+                    var checkStatus = setInterval(function () {
+                    fetch('issue-response-status?id=' + respIssuanceReq.id )
+                        .then(response => response.text())
+                        .catch(error => document.getElementById("message").innerHTML = error)
+                        .then(response => {
+                            if (response.length > 0) {
+                                //console.log(response)
+                                respMsg = JSON.parse(response);
+                                // respMsg.status == 1 -> QR Code scanned
+                                if (respMsg.status == 1) {
+                                    document.getElementById('message-wrapper').style.display = "block";
+                                    document.getElementById('qrText').style.display = "none";
+                                    document.getElementById('qrcodeFrame').style.display = "none";
+                                    document.getElementById('qrcode').style.display = "none";
+                                    document.getElementById('sign-in').textContent = 'Verify Again';
+                                    document.getElementById('message').innerHTML = respMsg.message;
+                                    clearInterval(checkStatus);
+                                }
+                                // respMsg.status == 2 -> VC presented and validated
+                                if (respMsg.status == 2) {
+                                    document.getElementById('message').innerHTML = respMsg.message + " validated successfully as " + cardTitle;
+                                    clearInterval(checkStatus);
+                                }
+                            }
+                        })
+                }, 3000);
+
+                })
+
+                var selfAssertedClaims;
+                fetch('echo')
+                .then(response => response.text())
+                .catch(error => document.getElementById("message").innerHTML = error)
+                .then(response => {
+                    if (response.length > 0) {
+                        var data = JSON.parse(response);
+                        document.getElementById('vcType').innerText = data.credentialType + " Issuance";
+                        document.getElementById('vcDescription').innerText = data.displayCard.description;
+                        document.body.style.backgroundColor = data.displayCard.backgroundColor;
+                        document.body.style.color = data.displayCard.textColor;
+                        document.getElementById('sign-in').style.backgroundColor = data.buttonColor;
+                        document.title = data.credentialType + ' Verifiable Credentials';
+                        // open up text fields for self asserted claims, if any
+                        selfAssertedClaims = null;
+                        if (data.selfAssertedClaims) {                                        
+                            selfAssertedClaims = data.selfAssertedClaims;
+                            document.getElementById('selfAssertedClaims').style.display = "block";
+                            var idx = 0;
+                            for (var claimName in data.selfAssertedClaims) {
+                                idx++;
+                                document.getElementById('selfAssertedClaims' + idx).style.display = "block";
+                                document.getElementById('label-entry' + idx).innerHTML = claimName;
+                                document.getElementById('entry' + idx).placeholder = data.selfAssertedClaims[claimName];
+                            };
+                        }
+                    }
+                })
+
+            </script>
+            </div>
+            <footer>
+                <p class="text-center text-gray tiny-text margin-top-75"><strong>SDK Version:</strong> 0.11.1-preview.5</BR></BR>
+                    <strong>Minimum MS Authenticator version required:</strong></BR></BR>
+                    Android: 6.2102.0762</BR>
+                    IOS: 6.5.26
+                </p>
+            </footer>
+            </div>
+        </body>
+        </html>

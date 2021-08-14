@@ -1,0 +1,129 @@
+<!-- Copyright (c) Microsoft Corporation. All rights reserved.
+     Licensed under the MIT License. -->
+
+     <html>
+        <head>
+            <meta charset="utf-8">
+            <title>NinjaCard Credential Verification</title>
+            <meta name="description" content="NinjaCard Verifiable Credentials Verification">
+            <meta name="author" content="Microsoft">
+            <link rel="stylesheet" href="styles.css">
+            <link rel="icon" href="favicon.png">
+          
+        </head>    
+        <body>
+            <div id="wrap">
+                <h3>API</h3>
+                <div style="text-align: center;">
+                    <img id="vcLogo" src="logo.png" height=200px; />
+                    <h1 id="vcType">NinjaCredential Verification</h1>
+                    <h3 id="vcDescription"></h3>
+                    <div id="message-wrapper" class="margin-bottom-75 margin-top-75" style="display: none">
+                        <i class="fas fa-user-check green icon-text-large margin-bottom-25"></i>
+                        <div id="message"></div>
+                    </div>
+                    <button style="margin-bottom: 20px;" type="button" id="sign-in" class="button light-purple-fill">PROVE Credential</button>
+                    <div id="qrText" style="display:none;">
+                        <p class="small-text">
+                            <img src="authenticator-icon.png" alt="Authenticator icon" class="icon-small"><br>
+                            Scan with Microsoft Authenticator
+                        </p>
+                    </div>
+                    <div id="qrcodeFrame" style="background:white;display:none">
+                        <div id="qrcode" style="text-align: center; padding:25px"></div>
+                    </div>
+                    <!--<img id="qrcodeImg" src="" style="width:300;height:300;display:none;"></div>-->
+                    <script src="qrcode.min.js"></script>
+                    <script>
+                        var signIn = document.getElementById('sign-in');
+                        var signOut = document.getElementById('sign-out');
+                        var display = document.getElementById('display');
+                        var qrcode = new QRCode("qrcode", { width: 300, height: 300 });
+        
+                        var respPresReq = null;
+                        var credentialType = "";
+                        var cardTitle = "";
+
+                        signIn.addEventListener('click', () => {
+                            fetch( 'presentation-request' )
+                            .then(response => response.text())
+                            .catch(error => document.getElementById("message").innerHTML = error)
+                            .then(response => {
+                                if (response.length > 0) {
+                                    console.log(response)
+                                    respPresReq = JSON.parse(response);
+                                    document.getElementById('qrcodeFrame').style.display="block";
+                                    qrcode.makeCode(respPresReq.url);
+                                    document.getElementById('qrText').style.display = "block";                                
+                                    //document.getElementsByTagName("img")[2].src = respPresReq.qrCode;
+                                    //document.getElementById('qrcodeImg').src = respPresReq.qrCode;
+                                    //document.getElementById('qrcodeImg').style.display = "block";
+                                    document.getElementById('sign-in').style.display = "none";
+                                }
+                            })
+
+                            var checkStatus = setInterval(function () {
+                                fetch('presentation-response-status?id=' + respPresReq.id)
+                                    .then(response => response.text())
+                                    .catch(error => document.getElementById("message").innerHTML = error)
+                                    .then(response => {
+                                        if (response.length > 0) {
+                                            console.log(response)
+                                            var respMsg = JSON.parse(response);
+                                            // respMsg.status == 1 -> QR Code scanned
+                                            if (respMsg.status == 1) {
+                                                document.getElementById('message-wrapper').style.display = "block";
+                                                document.getElementById('qrText').style.display = "none";
+                                                document.getElementById('qrcodeFrame').style.display = "none";
+                                                document.getElementById('qrcode').style.display = "none";
+                                                document.getElementById('sign-in').textContent = 'Verify Again';
+                                                document.getElementById('message').innerHTML = respMsg.message;
+                                            }
+                                            // respMsg.status == 2 -> VC presented and validated
+                                            if (respMsg.status == 2) {
+                                                var displayName = "(unknown)";
+                                                if ( respMsg.claims.displayName ) {
+                                                    displayName = respMsg.claims.displayName;
+                                                }
+                                                if ( respMsg.claims.firstName ) {
+                                                    displayName = `${respMsg.claims.firstName} ${respMsg.claims.lastName}`;
+                                                }
+                                                document.getElementById('message').innerHTML = displayName + " validated successfully";
+                                                clearInterval(checkStatus);
+                                            }
+                                        }
+                                    })
+                            }, 3000);
+            
+                        })
+        
+                        fetch('echo')
+                        .then(response => response.text())
+                        .catch(error => document.getElementById("message").innerHTML = error)
+                        .then(response => {
+                            if (response.length > 0) {
+                                var data = JSON.parse(response);
+                                credentialType = data.credentialType;
+                                cardTitle = data.displayCard.title;
+                                document.getElementById('vcType').innerText = data.displayCard.title + " Verification";
+                                document.getElementById('vcDescription').innerText = data.displayCard.description;
+                                document.body.style.backgroundColor = data.displayCard.backgroundColor;
+                                document.body.style.color = data.displayCard.textColor;
+                                document.getElementById('sign-in').style.backgroundColor = data.buttonColor;
+                                document.title = data.credentialType + ' Verifiable Credentials';
+                                //document.getElementById('sign-in').textContent = 'PROVE ' + data.credentialType + ' Credential';
+                            }
+                        })
+
+                    </script>
+                </div>
+                <footer>
+                    <p class="text-center text-gray tiny-text margin-top-75"><strong>SDK Version:</strong> 0.11.1-preview.5</BR></BR>
+                    <strong>Minimum MS Authenticator version required:</strong></BR></BR>
+                    Android: 6.2102.0762</BR>
+                    IOS: 6.5.26
+                    </p>
+                </footer>
+            </div>
+        </body>
+    </html>
