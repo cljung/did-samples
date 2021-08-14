@@ -1,0 +1,5 @@
+{
+    "azTenantId": "<TENANT-GUID>",
+    "azClientId": "<CLIENTID>",
+    "azClientSecret": "<CLIENTSECRET>"
+}
