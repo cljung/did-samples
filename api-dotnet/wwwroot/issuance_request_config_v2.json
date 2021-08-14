@@ -1,0 +1,23 @@
+{
+  "authority": "did-of-the Issuer",
+  "includeQRCode": true,
+  "registration": {
+    "clientName": "the verifier's client name"
+  },
+  "callback": {
+    "url": "endpoint to your callback when VC is presented and validated",
+    "nonce": "...",
+    "state": "you pass your state here to correlate it when you get the callback",
+    "headers": {
+      "my-api-key": "...set at runtime..."
+    }
+  },
+  "issuance": {
+    "type": "your credentialType",
+    "manifest": "https://beta.did.msidentity.com/v1.0/3c32ed40-8a10-465b-8ba4-0b1e86882668/verifiableCredential/contracts/VerifiedCredentialExpert",
+    "pin": {
+      "value": "012345",
+      "length": 0
+    }
+  }
+}

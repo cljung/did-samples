@@ -1,0 +1,1 @@
+dotnet run /IssuanceRequestConfigFile=%cd%\requests\issuance_request_config_v2.json /PresentationRequestConfigFile=%cd%\requests\presentation_request_config_v2.json

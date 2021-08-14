@@ -1,0 +1,22 @@
+{
+  "authority": "did:ion:EiDya_3qGemDSLcGibS7qOVD2TEOdwTo40zu56eAuyMV0g:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJzaWdfZjNlYzZkYTYiLCJwdWJsaWNLZXlKd2siOnsiY3J2Ijoic2VjcDI1NmsxIiwia3R5IjoiRUMiLCJ4IjoiVVd4WVBfSTA1eWFoYTNTVmZ6ZVltWEFtQjJHdDNRNXJkQjVhYUw2VXREayIsInkiOiJEYk82YXlabVNrLU4zRlhOZFFFbjNmUjVGaGV1MjJqM3F3bC1xNnpSWE9FIn0sInB1cnBvc2VzIjpbImF1dGhlbnRpY2F0aW9uIiwiYXNzZXJ0aW9uTWV0aG9kIl0sInR5cGUiOiJFY2RzYVNlY3AyNTZrMVZlcmlmaWNhdGlvbktleTIwMTkifV0sInNlcnZpY2VzIjpbeyJpZCI6ImxpbmtlZGRvbWFpbnMiLCJzZXJ2aWNlRW5kcG9pbnQiOnsib3JpZ2lucyI6WyJodHRwczovL2Rldi5mYXdsdHl0b3dlcnMyLmNvbS8iXX0sInR5cGUiOiJMaW5rZWREb21haW5zIn1dfX1dLCJ1cGRhdGVDb21taXRtZW50IjoiRWlDaFB4dzlpdWZyaU5jMnkzeGdfeGQ2TzNPMEI0QlpaOEJJNldLNnh3dHBqUSJ9LCJzdWZmaXhEYXRhIjp7ImRlbHRhSGFzaCI6IkVpQmc2cmpUUjJVeVowQ3lZT0Zpd291bXpVNTQ0MUt0Y2FJNHZrb20xQjlxeFEiLCJyZWNvdmVyeUNvbW1pdG1lbnQiOiJFaUJvVUxzZWh2WmxnTUh6XzNiVks1Q3JxZlpuRHBiR1BrMHE0QmhrcFhabzhnIn19",
+  "includeQRCode": false,
+  "registration": {
+    "clientName": "...set at runtime..."
+  },
+  "callback": {
+    "url": "...set at runtime...",
+    "state": "...set at runtime...",
+    "headers": {
+      "my-api-key": "blabla"
+    }
+  },
+  "issuance": {
+    "type": "",
+    "manifest": "https://beta.did.msidentity.com/v1.0/9885457a-2026-4e2c-a47e-32ff52ea0b8d/verifiableCredential/contracts/FawltyTowers2Employee",
+    "pin": {
+      "value": "9999",
+      "length": 0
+    }
+  }
+}

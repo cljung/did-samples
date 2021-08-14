@@ -1,0 +1,27 @@
+{
+  "authority": "did-of-the-Verifier",
+  "includeQRCode": true,
+  "registration": {
+    "clientName": "the verifier's client name",
+    "logoUrl": "https://test-relyingparty.azurewebsites.net/images/did_logo.png"
+  },
+  "callback": {
+    "url": "endpoint to your callback when VC is presented and validated",
+    "nonce": "...",
+    "state": "you pass your state here to correlate it when you get the callback",
+    "headers": {
+      "my-api-key": "...set at runtime..."
+    }
+  },
+  "presentation": {    
+    "includeReceipt": true,
+    "requestedCredentials": [
+      {
+        "type": "your credentialType",
+        "manifest": "https://beta.did.msidentity.com/v1.0/3c32ed40-8a10-465b-8ba4-0b1e86882668/verifiableCredential/contracts/VerifiedCredentialExpert",
+        "purpose": "the purpose why the verifier asks for a VC",
+        "trustedIssuers": [ "did-of-the-Issuer-trusted" ]
+      }
+    ]
+  }
+}

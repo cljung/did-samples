@@ -1,0 +1,22 @@
+{
+  "authority": "did-of-the-Verifier",
+  "includeQRCode": true,
+  "registration": {
+    "clientName": "the verifier's client name",
+    "logoUrl": "https://test-relyingparty.azurewebsites.net/images/did_logo.png"
+  },
+  "presentation": {
+    "callback": "endpoint to your callback when VC is presented and validated",
+    "nonce": "...",
+    "state": "you pass your state here to correlate it when you get the callback",
+    "includeReceipt": true,
+    "requestedCredentials": [
+      {
+        "type": "your credentialType",
+        "manifest": "https://portableidentitycards.azure-api.net/v1.0/9c59be8b-bd18-45d9-b9d9-082bc07c094f/portableIdentities/contracts/AIEngineerCert",
+        "purpose": "the purpose why the verifier asks for a VC",
+        "trustedIssuers": [ "did-of-the-Issuer-trusted" ]
+      }
+    ]
+  }
+}
