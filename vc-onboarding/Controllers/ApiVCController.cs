@@ -239,6 +239,11 @@ namespace vc_onboarding.Controllers
                 string surname = User.Claims.Where(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname").Select(c => c.Value).SingleOrDefault();
                 string givenname = User.Claims.Where(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname").Select(c => c.Value).SingleOrDefault();
 
+                string displayName = User.Claims.Where(c => c.Type == "name").Select(c => c.Value).SingleOrDefault();
+                if (string.IsNullOrEmpty(displayName)) {
+                    displayName = User.Identity.Name;
+                }
+
                 var issuanceRequest = new {
                         authority = manifest["input"]["issuer"],
                         includeQRCode= false,
@@ -255,7 +260,7 @@ namespace vc_onboarding.Controllers
                             type = manifest["id"],
                             manifest = this.AppSettings.DidManifest,
                             claims = new {
-                                displayName = User.Identity.Name,
+                                displayName = displayName,
                                 objectId = userObjectId,
                                 tid = this.AppSettings.TenantId,
                                 lastName = surname,
