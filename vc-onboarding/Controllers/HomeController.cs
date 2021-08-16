@@ -45,10 +45,15 @@ namespace vc_onboarding.Controllers
             string surname = User.Claims.Where(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname").Select(c => c.Value).SingleOrDefault();
             string givenname = User.Claims.Where(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname").Select(c => c.Value).SingleOrDefault();
 
+            string displayName = User.Claims.Where(c => c.Type == "name").Select(c => c.Value).SingleOrDefault();
+            if ( string.IsNullOrEmpty(displayName) ) {
+                displayName = User.Identity.Name;
+            }
+
             IDictionary<string, string> vcClaims = new Dictionary<string, string>();
             vcClaims.Add( "tid", this.AppSettings.TenantId);
             vcClaims.Add( "objectId", userObjectId);
-            vcClaims.Add( "displayName", User.Identity.Name );
+            vcClaims.Add( "displayName", displayName );
             vcClaims.Add( "lastName", surname);
             vcClaims.Add( "firstName", givenname);
 

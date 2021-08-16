@@ -44,3 +44,32 @@ The other section controls Verifiable Credential settings. You need to update `T
 
 ## Running the sample
 The sample is self contained and contains the callback APIs that the VC Client API uses (see the ApiVCController.cs). That means that the webapp needs a public endpoint and will not work with localhost. If you want to get something running fast, you can use `ngrok` as an temp App Proxy.
+
+## Switching from B2C to Azure AD
+If you prefer to signin to and Azure AD instance instead of B2C, you need to make two changes.
+
+### Startup.cs
+In Startup.cs you need to switch which line is commented out.
+
+```CSharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+        .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAdB2C")); // if you use Azure AD B2C to sign in to
+    //    .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));   // if you use Azure AD to sign in to
+
+```
+
+### appsettings.json
+In appsettings.json, you need to update the `AzureAd` section with information of your AAD tenant and the `ClientId` of your App Registration there. 
+When you do the App Registration, you need to go into `Token configuration` to add `family_name` and `given_name` for the `ID` Token type.
+
+```JSON
+  "AzureAd": {
+    "Instance": "https://login.microsoftonline.com/",
+    "Domain": "<YOURDOMAIN.com>",
+    "TenantId": "<YOURTENANTID-THAT-YOU-LOGIN-TO>",
+    "ClientId": "<YOURCLIENTID-THAT-YOU-LOGIN-TO>",
+    "CallbackPath": "/signin-oidc"
+  },
+```

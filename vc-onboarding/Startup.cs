@@ -30,7 +30,9 @@ namespace vc_onboarding
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-                .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAdB2C"));
+                .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAdB2C")); // if you use Azure AD B2C to sign in to
+            //    .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));   // if you use Azure AD to sign in to
+
             services.AddControllersWithViews();
 
             services.AddRazorPages()
