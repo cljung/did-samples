@@ -9,7 +9,7 @@
     <h1 id="vcType">YOURVCTYPE Credential Issuance</h1>
     <h3 id="vcDescription"></h3>
 
-    <div id="id-infomertial">
+    <div id="id-claims">
         <p>You will be issued a Verifiable Credential containing these claims. Some are preset, some you can edit yourself.</p>
         <table class="table-hover table-condensed table-striped" style="margin:0 auto">
             <tr>
@@ -57,14 +57,14 @@
         var signIn = document.getElementById('sign-in');
         var qrcode = new QRCode("qrcode", { width: 300, height: 300 });
 
+        document.getElementById('idLanguage').innerHTML = navigator.language;
         document.getElementById('message').innerHTML = "Preparing QR code...";
 
         var apiEndpoint = window.location.origin;
         var respIssuanceReq = null;
         signIn.addEventListener('click', () => {
-            document.getElementById('id-infomertial').style.display = "none";
+            document.getElementById('id-claims').style.display = "none";
             document.getElementById('message-wrapper').style.display = "block";
-            document.getElementById('idLanguage').innerHTML = navigator.language;
 
             var queryStrings = "?title=" + document.getElementById('idTitle').value + "&preferedLanguage=" + document.getElementById('idLanguage').value;
 

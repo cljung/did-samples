@@ -57,6 +57,15 @@ namespace vc_onboarding.Controllers
             return View();
         }
         public IActionResult VerifyVC() {
+            IDictionary<string, string> vcClaims = new Dictionary<string, string>();
+            vcClaims.Add("tid", "");
+            vcClaims.Add("sub", "");
+            vcClaims.Add("displayName", "");
+            vcClaims.Add("lastName", "");
+            vcClaims.Add("firstName", "");
+            vcClaims.Add("title", "");
+            vcClaims.Add("language", "");
+            ViewData["vcClaims"] = vcClaims;
             return View();
         }
 

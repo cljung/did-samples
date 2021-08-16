@@ -32,7 +32,8 @@ namespace vc_onboarding
             services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAdB2C"));
             services.AddControllersWithViews();
-           services.AddRazorPages()
+
+            services.AddRazorPages()
                 .AddMicrosoftIdentityUI();
             services.Configure<AppSettingsModel>(Configuration.GetSection("AppSettings"));
         }
@@ -54,6 +55,8 @@ namespace vc_onboarding
             app.UseStaticFiles();
 
             app.UseRouting();
+
+            app.UseCookiePolicy();
 
             app.UseAuthentication();
             app.UseAuthorization();

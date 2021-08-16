@@ -12,12 +12,29 @@
         <i class="fas fa-user-check green icon-text-large margin-bottom-25"></i>
         <div id="message"></div>
         <div id="did-wrapper" style="display:none">
-            <textarea name="did" id="did" rows="10" cols="30">did:ion:...</textarea>
-            <a id="idIon" href="https://identity.foundation/ion/explorer/?did=" target="_blank">View DID with identity.foundation/explorer</a>
+            <div id="id-claims">
+                <table class="table-hover table-condensed table-striped" style="margin:0 auto">
+                    <tr>
+                        <th>Claim</th>
+                        <th>Value</th>
+                    </tr>
+                    @foreach (var claim in (Dictionary<string,string>)ViewData["vcClaims"]) {
+                    <tr>
+                        <td>@claim.Key</td>
+                        <td id="id-claim-@claim.Key"></td>
+                    </tr>
+                    }
+                    <tr>
+                        <td>DID</td>
+                        <td><a id="idIon" href="https://identity.foundation/ion/explorer/?did=" target="_blank">View DID with identity.foundation/explorer</a></td>
+                    </tr>
+                </table>
+            </div>
+            
         </div>
     </div>
 
-    <button type="button" id="sign-in" class="button">PROVE CREDENTIAL</button>
+    <button type="button" id="sign-in" class="button">PRESENT CREDENTIAL</button>
 
     <div id="qrText" style="display:none;">
         <p class="small-text">
@@ -44,7 +61,7 @@
         signIn.addEventListener('click', () => {
             document.getElementById('message-wrapper').style.display = "block";
             document.getElementById('message').innerHTML = "Preparing QR code...";
-
+            document.getElementById('sign-in').style.display = "none";
             fetch(apiEndpoint + '/api/presentation-request')
                 .then(response => response.text())
                 .catch(error => document.getElementById("message").innerHTML = error)
@@ -57,8 +74,7 @@
                         document.getElementById('qrcodeFrame').style.display = "block";
                         document.getElementsByTagName("img")[2].src = respPresReq.qrCode;
                         //document.getElementById('qrcodeImg').src = resp.qrCode;
-                        //document.getElementById('qrcodeImg').style.display = "block";
-                        document.getElementById('sign-in').style.display = "none";
+                        //document.getElementById('qrcodeImg').style.display = "block";                        
                         document.getElementById('message').innerHTML = "Waiting for scanning of QR code...";
                     }
                 })
@@ -85,8 +101,11 @@
                                 document.getElementById('message').innerHTML = respMsg.message + " validated successfully";
                                 clearInterval(checkStatus);
                                 document.getElementById('did-wrapper').style.display = "block";
-                                document.getElementById('did').innerHTML = respMsg.did;
                                 document.getElementById('idIon').href = "https://identity.foundation/ion/explorer/?did=" + respMsg.did;
+                                var idx = 0;
+                                for (idx = 0; idx < Object.keys(respMsg.claims).length; idx++) {
+                                    document.getElementById('id-claim-' + Object.keys(respMsg.claims)[idx]).innerHTML = respMsg.claims[Object.keys(respMsg.claims)[idx]];
+                                }
                             }
                         }
                     })

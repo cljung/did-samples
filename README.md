@@ -69,7 +69,7 @@ In the response message from the VC Client API, it will include it's own callbac
 ```json
 {
     "requestId": "799f23ea-524a-45af-99ad-cf8e5018814e",
-    "url": "openid://vc?request_uri=https://dev.did.msidentity.com/v1.0/abc/verifiablecredentials/request/178319f7-20be-4945-80fb-7d52d47ae82e",
+    "url": "openid://vc?request_uri=https://beta.did.msidentity.com/v1.0/abc/verifiablecredentials/request/178319f7-20be-4945-80fb-7d52d47ae82e",
     "expiry": 1622227690,
     "qrCode": "data:image/png;base64,iVBORw0KGgoA<SNIP>"
 }

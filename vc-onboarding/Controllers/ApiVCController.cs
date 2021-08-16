@@ -430,6 +430,7 @@ namespace vc_onboarding.Controllers
                     var cacheData = new {
                         status = 2,
                         message = displayName,
+                        claims = vcClaims,
                         presentationResponse = presentationResponse
                     };
                     CacheJsonObjectWithExpiery(correlationId, cacheData);
@@ -469,6 +470,7 @@ namespace vc_onboarding.Controllers
             var browserData = new {
                 status = cacheData["status"],
                 message = cacheData["message"],
+                claims = cacheData["claims"],
                 did = did
             };
             return JsonConvert.SerializeObject(browserData);
