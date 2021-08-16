@@ -16,11 +16,11 @@
                 <th>Claim</th>
                 <th>Value</th>
             </tr>
-            @foreach (var claim in (Dictionary<string,string>)ViewData["vcClaims"]) {
-            <tr>
-                <td>@claim.Key</td>
-                <td>@claim.Value</td>
-            </tr>
+            @foreach (var claim in (Dictionary<string, string>)ViewData["vcClaims"]) {
+                <tr>
+                    <td>@claim.Key</td>
+                    <td>@claim.Value</td>
+                </tr>
             }
             <tr>
                 <td>title</td>
@@ -29,6 +29,10 @@
             <tr>
                 <td>preferedLanguage</td>
                 <td><input id="idLanguage" type="text" placeholder="en-us" /></td>
+            </tr>
+            <tr>
+                <td>DID</td>
+                <td><a id="idIon" href="https://identity.foundation/ion/explorer/?did=" target="_blank">View Issuer's DID with identity.foundation/explorer</a></td>
             </tr>
         </table>
     </div>
@@ -130,6 +134,7 @@
                     document.getElementById('vcType').innerText = data.credentialType + " Issuance";
                     document.getElementById('vcDescription').innerText = data.displayCard.description;
                     document.title = data.credentialType + ' Verifiable Credentials';
+                    document.getElementById('idIon').href = "https://identity.foundation/ion/explorer/?did=" + data.didIssuer;
                 }
             })
 
