@@ -24,7 +24,7 @@ $nameVCIS = "Verifiable Credentials Issuer Service"
 $spVCIS = Get-AzADServicePrincipal -SearchString $nameVCIS 
 if ( $null -eq $spVCIS ) {
     write-host "Enterprise Application missing in tenant : '$nameVCIS'`n`n" `
-                "1) Make sure you are using an Azure AD P1/P2 tenant`n" `
+                "1) Make sure you are using an Azure AD P2 tenant`n" `
                 "2) Make sure you can see '$nameVCIS' as an Enterprise Application`n"
     exit 1
 }
@@ -73,21 +73,12 @@ if (!($roles | where {$_.DisplayName -eq $roleName})) {
     New-AzRoleAssignment -ObjectId $userObjectId -RoleDefinitionName $roleName -Scope $scope  # you, the admin
 }
 
+write-host "TenantId: $($ctx.Tenant.Id)`nClientId: $client_id`nClientSecret: $appSecret"
+
+write-host "DidManifest: https://beta.did.msidentity.com/v1.0/$($ctx.Tenant.Id)/verifiableCredential/contracts/$VCType"
+
 if ( $GenerateConfigFiles) 
 {
-$didconfigJson = @"
-{
-    "azTenantId": "$($ctx.Tenant.Id)",
-    "azClientId": "$client_id",
-    "azClientSecret": "$appSecret",
-    "kvVaultUri": "https://$KeyVaultName.$($ctx.Environment.AzureKeyVaultDnsSuffix)/",
-    "kvSigningKeyId": "..update this...",
-    "kvRemoteSigningKeyId" : "issuerSigningKeyIon- ... something in your KeyVault keys",
-    "did": "did:ion: ... Issuer Identifier DID in the VC blade in portal.azure.com",
-    "manifest": "https://beta.did.msidentity.com/v1.0/$($ctx.Tenant.Id)/verifiableCredential/contracts/$VCType"
-}
-"@
-    Set-Content -Path "$((get-location).Path)\didconfig.json" -Value $didconfigJson
 
 $rulesJson = @"
 {

@@ -2,10 +2,10 @@
 
 This is an ARM Template for deploying Azure resources that are needed to start issuing your own Verifiable Credentials from an Azure AD tenant. It will not register the application you need in your Azure AD B2C tenant.
 
-In the screenshots below uses the name `ContosoEmployee`. For your B2C deployment you should consider using a name like `ContosoMembershipClub`, etc. 
+In the screenshots below uses the name `ContosoEmployee`.  
 
 ## Make sure you have an Azure AD Premium tenant
-First, you need to make sure that you are using Azure Active Directory P1 or P2. If you don't have a P1/P2, Verifiable Credentials will not work. You can find out if you have a P1/P2 in the overview section of the Acure Active Directory blade in portal.azure.com
+First, you need to make sure that you are using Azure Active Directory P2. If you don't have a P2, Verifiable Credentials will not work. You can find out if you have a P2 in the overview section of the Acure Active Directory blade in portal.azure.com
 
 ## Verify you can see Enterprise Application Verifiable Credentials Issuer Service
 Second, you need to make sure you see the application named `Verifiable Credentials Issuer Service` in the `Enterprise Application` section in the AAD blade. Switch to Type = `Microsoft Application` and search for it.
@@ -28,7 +28,7 @@ Then run the below command after replacing the respective parameters with the na
 ```powershell
 .\DID-deploy-issuer.ps1 -ResourceGroupName "did-rg" -Location "West Europe" `
          -KeyVaultName "did-kv" -StorageAccountName "didstg" `
-         -IssuerAppName "VC Issuer Sample" -VCType "ContosoEmployee" -GenerateConfigFiles 
+         -IssuerAppName "VC Issuer Sample" -VCType "ContosoEmployee" -GenerateConfigFiles
 ```
 
 **PLEASE NOTE** you need to change `KeyVaultName` and the `StorageAccountName` to be globally unique.
@@ -41,7 +41,6 @@ The script will:
     - An Azure Storage Account with one private container and one public. The private will later store your Rules & Display file while the public will host your VC card's logo image.
 - Assign the permission `Storage Blob Data Reader` to the `Verifiable Credentials Issuer Service` service principal for the storage account so that it can read the Rules & Display files.
 - Generate template json files:
-    - didconfig.json - used by the VC Issuer sample (you need to update this file after completing the below steps)
     - Rules file - A file that binds your VC Issuar Sample app to your Azure AD tenant. The generated Rules file contains some extra claims to illustrate how that can be done
     - Display file - The visual design of your VC card that controls how it is displayed in the Microsoft Authenticator app.
 
@@ -66,18 +65,6 @@ Open the Rules & Display json files and make any changes you see needed. This ma
 
 When you are done, go to the `Properties` part in the `VC Blade` in portal.azure.com and upload the respective files. If you later make changes, you can upload them again, but if you do, it will take a few minutes for the changes to be picked up. You can use the `Issuer Credential URL` and open it in a browser to see if your added claims are there.
 
-## Clone the Issuer sample, change config and run it
+## Pick and clone the API sample, change config and run it
 
-Finally, it is time to git clone the [VC Issuer sample](https://github.com/Azure-Samples/active-directory-verifiable-credentials) and follow the instructions for how to get that up and running. The `didconfig.json` template file that the deployment script generated should replace the file in the [issuer/didconfig.json](https://github.com/Azure-Samples/active-directory-verifiable-credentials/blob/main/issuer/didconfig.json) file. 
-
-![Getting Started](/media/admin-screenshot-issuer-details.png)
-
-There are three additional changes you need to do:
-- kvSigninKeyId - see explanation below
-- kvRemoteSigningKeyId - You find this in the Azure Key Vault instance you created under the `Keys` section. After you connected your VC instance to KeyVault, it creates three keys. The one to copy has a name that starts with `issuerSigningKeyIon-...`.
-- did - You will find the value to use here in the Overview section of your Credential in the `VC Blade` labeled as `Issuer Identifier`. It is a long string that starts with `did:ion:`
-
-To get your `kvSigninKeyId`, you can do the following
-- Copy the `Issuer Identifier` (long string that starts with did:ion:...)
-- Open the browser and navigate to `https://beta.discover.did.microsoft.com/1.0/identifiers/did:ion:....`
-- Find the `verificationMethod` attribute and pick the next id, which looks like `#sig_123abc45`. Copy that value without the `#` char and use that
+To deploy an issuing and verifying service, you need to pick any of the `api-*` samples in this github repo, configure and run it. Instructions are in the respective README.md.
