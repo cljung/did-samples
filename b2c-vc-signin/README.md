@@ -6,7 +6,7 @@ Signin to Azure AD B2C with Verifiable Credentials.
 - Issue Verifiable Credentials from your B2C tenant to Microsoft Authenticator on your smartphone
 - Signin to B2C with your verifiable Credentials by scanning a QR code
  
-![Scan QR code](media/b2c-vc-scan-qr-code.png)
+![Scan QR code](/media/b2c-vc-scan-qr-code.png)
 
 ## What you need to deploy and test this solution is
 
@@ -25,6 +25,10 @@ Signin to Azure AD B2C with Verifiable Credentials.
 - A public website, like Azure AppServices, for the VC verifier
  
 For the public website, you can use [ngrok](https://ngrok.com/) during development to run the websites from your local laptop.
+
+## Issuer and Verifier website and API
+
+This sample no longer contains the node.js code for the VC issuer and verifier. Instead you need to pick any of the `api-*` samples in your prefered language and follow the deployment instructions in each project. After deploying them, you need to make sure you follow the instructions for B2C, as the B2C Custom Policies makes REST API calls to your deployed APIs.
 
 ## Live site for testing
 
