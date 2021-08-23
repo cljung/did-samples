@@ -1,0 +1,26 @@
+{
+  "authority": "did:ion:EiD_ZULUvK_3eTfWfq97cc87DeU8J0AEzIaSuFLRAHzXoQ:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJzaWdfY2FiNjVhYTAiLCJwdWJsaWNLZXlKd2siOnsiY3J2Ijoic2VjcDI1NmsxIiwia3R5IjoiRUMiLCJ4IjoiU21xMVZNNXp0RUVpZGpoWE5uckxub3N5TkI2MEVaV05CWXdUY3dQazU3YyIsInkiOiJSeFd3QlNyQjBaWl9MdndKVGpMamRqUEtTMXlZQjgzOUZIckFWUm9EYW9nIn0sInB1cnBvc2VzIjpbImF1dGhlbnRpY2F0aW9uIiwiYXNzZXJ0aW9uTWV0aG9kIl0sInR5cGUiOiJFY2RzYVNlY3AyNTZrMVZlcmlmaWNhdGlvbktleTIwMTkifV0sInNlcnZpY2VzIjpbeyJpZCI6ImxpbmtlZGRvbWFpbnMiLCJzZXJ2aWNlRW5kcG9pbnQiOnsib3JpZ2lucyI6WyJodHRwczovL3ZjYXBpZGV2Lndvb2Rncm92ZWRlbW8uY29tLyJdfSwidHlwZSI6IkxpbmtlZERvbWFpbnMifV19fV0sInVwZGF0ZUNvbW1pdG1lbnQiOiJFaUIza0VSRUlwSWdodFp2SUxaemFlMDF1NGtXSVNnWHFqN0lFUFVfUGNBUnJBIn0sInN1ZmZpeERhdGEiOnsiZGVsdGFIYXNoIjoiRWlEcGMtelNRcHJYMGhacDdlMC1QXzhwWjkzdm9EZXhwLVo1ZXVtbFhzN2hQUSIsInJlY292ZXJ5Q29tbWl0bWVudCI6IkVpQWtKOTNBLThyeXF3X0VqSVRuSEpqdkhvZ016N2YtTlRZWXlhOENVMEdYdWcifX0",
+  "includeQRCode": false,
+  "registration": {
+    "clientName": "...set at runtime..."
+  },
+  "callback": {
+    "url": "...set at runtime...",
+    "nounce": "...set at runtime...",
+    "state": "...set at runtime...",
+    "headers": {
+      "my-api-key": "blabla"
+    }
+  },
+  "presentation": {
+    "includeReceipt": true,
+    "requestedCredentials": [
+      {
+        "type": "TrueIdentity",
+        "manifest": "https://beta.did.msidentity.com/v1.0/3c32ed40-8a10-465b-8ba4-0b1e86882668/verifiableCredential/contracts/True Identity",
+        "purpose": "the purpose why the verifier asks for a VC",
+        "trustedIssuers": [ "did-of-the-Issuer-trusted" ]
+      }
+    ]
+  }
+}

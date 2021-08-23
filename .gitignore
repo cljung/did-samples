@@ -305,3 +305,39 @@ cython_debug/
 
 # ignore (private) dev settings
 didconfig.[Dd]evelopment.json
+
+### Java ###
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+/build/
+
+# ignore (private) dev things
+build.[Dd]evelopment.cmd
+build.[Dd]evelopment.sh
+run.[Dd]evelopment.cmd
+run.[Dd]evelopment.sh
+docker.[Dd]evelopment.cmd
+docker.[Dd]evelopment.sh
