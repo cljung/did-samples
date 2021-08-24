@@ -6,35 +6,21 @@ import java.util.concurrent.*;
 import java.util.stream.*;
 import java.text.*;
 import java.net.*;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
+import java.nio.file.*;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.cache.annotation.*;
-import org.springframework.web.reactive.function.BodyInserters;
-
 import com.github.benmanes.caffeine.cache.*;
-
-import com.microsoft.aad.msal4j.ClientCredentialFactory;
-import com.microsoft.aad.msal4j.ClientCredentialParameters;
-import com.microsoft.aad.msal4j.ConfidentialClientApplication;
-import com.microsoft.aad.msal4j.IAuthenticationResult;
+import com.microsoft.aad.msal4j.*;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 
 @RestController
@@ -80,17 +66,12 @@ public class ApiVCController {
     @Value("${aadvc.ClientSecret}")
     private String clientSecret;
     
+    @Value("${aadvc.Authority}")
+    private String aadAuthority;
+
     // *********************************************************************************
     // helpers
     // *********************************************************************************
-    private String getComputerName() {
-        try {
-            return InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException ex) {
-            return "<unknown host>"; 
-        }    
-    }
-
     private String getDateTimeAsIso8601() {
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -112,7 +93,7 @@ public class ApiVCController {
         String queryString = request.getQueryString();
     
         if (queryString != null) {
-            requestURL += queryString;
+            requestURL += "?" + queryString;
         }
         lgr.info( method + " " + requestURL );
     }
@@ -155,7 +136,7 @@ public class ApiVCController {
                 cache.put( "MSALAccessToken", accessToken );
             }
         } catch( Exception ex ) {
-            lgr.info( ex.toString() );
+            ex.printStackTrace();
             return null;
         }
         String endpoint = apiEndpoint.replace("{0}", tenantId );
@@ -180,7 +161,9 @@ public class ApiVCController {
     }   
     
     private String getAccessTokenByClientCredentialGrant() throws Exception {
-        String authority = "https://login.microsoftonline.com/" + tenantId;
+        String authority = aadAuthority.replace("{0}", tenantId );
+        lgr.info( aadAuthority );
+        lgr.info( authority );
         ConfidentialClientApplication app = ConfidentialClientApplication.builder(
                 clientId,
                 ClientCredentialFactory.createFromSecret(clientSecret))
@@ -193,6 +176,7 @@ public class ApiVCController {
         IAuthenticationResult result = future.get();
         return result.accessToken();
     }    
+
     // *********************************************************************************
     // public
     // *********************************************************************************
@@ -204,10 +188,12 @@ public class ApiVCController {
         try {
             JsonNode rootNode = objectMapper.readTree( manifest );
             redirectUri = rootNode.path("display").path("card").path("logo").path("uri").asText();
+            httpServletResponse.setHeader("Location", redirectUri);
+            httpServletResponse.setStatus(302);
         } catch (java.io.IOException ex) {
+            ex.printStackTrace();
+            httpServletResponse.setStatus(400);
         }    
-        httpServletResponse.setHeader("Location", redirectUri);
-        httpServletResponse.setStatus(302);
     }
 
     @GetMapping("/api/echo")
@@ -230,6 +216,8 @@ public class ApiVCController {
             data.put("buttonColor", "#000080" );
             json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data);
         } catch (java.io.IOException ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( "Technical error" );
         }    
 
         HttpHeaders responseHeaders = new HttpHeaders();
@@ -270,6 +258,7 @@ public class ApiVCController {
         ObjectMapper objectMapper = new ObjectMapper();
         Integer pinCodeLength = 0;
         Integer pinCode = 0;
+        String responseBody = "";
         try {
             JsonNode rootNode = objectMapper.readTree( jsonRequest );
             ((ObjectNode)(rootNode.path("registration"))).put("clientName", clientName );
@@ -286,11 +275,7 @@ public class ApiVCController {
                 }
             }
             payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootNode);
-        } catch (java.io.IOException ex) {
-        }    
-        
-        String responseBody = CallVCClientAPI( payload );
-        try {
+            responseBody = CallVCClientAPI( payload );
             JsonNode apiResponse = objectMapper.readTree( responseBody );
             ((ObjectNode)apiResponse).put( "id", correlationId );
             if ( pinCodeLength > 0 ) {
@@ -298,8 +283,10 @@ public class ApiVCController {
             }
             responseBody = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(apiResponse);
         } catch (java.io.IOException ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( "Technical error" );
         }    
-
+        
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Content-Type", "application/json");    
         return ResponseEntity.ok()
@@ -307,7 +294,7 @@ public class ApiVCController {
           .body( responseBody );
     }
 
-    @RequestMapping(value = "/api/issue-request-callback", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/issue-request-callback", method = RequestMethod.POST, produces = "application/json", consumes = "application/json")
     public ResponseEntity<String> issueRequestCallback( HttpServletRequest request
                                                       , @RequestHeader HttpHeaders headers
                                                       , @RequestBody String body ) {
@@ -327,6 +314,8 @@ public class ApiVCController {
                 cache.put( correlationId, json );
             }
         } catch (java.io.IOException ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( "Technical error" );
         }    
         
         return ResponseEntity.ok()
@@ -350,6 +339,8 @@ public class ApiVCController {
                 statusResponse.put("message", cacheData.path("message").asText() );
                 responseBody = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(statusResponse);
             } catch (java.io.IOException ex) {
+                ex.printStackTrace();
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( "Technical error" );
             }    
         }
         HttpHeaders responseHeaders = new HttpHeaders();
@@ -377,6 +368,7 @@ public class ApiVCController {
 
         String payload = "{}";
         ObjectMapper objectMapper = new ObjectMapper();
+        String responseBody = "";
         try {
             JsonNode rootNode = objectMapper.readTree( jsonRequest );
             ((ObjectNode)(rootNode.path("registration"))).put("clientName", clientName );
@@ -384,17 +376,15 @@ public class ApiVCController {
             ((ObjectNode)(rootNode.path("callback"))).put("state", correlationId );
             ((ObjectNode)(rootNode.path("callback").path("headers"))).put("my-api-key", apiKey );
             payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootNode);
-        } catch (java.io.IOException ex) {
-        }    
-        
-        String responseBody = CallVCClientAPI( payload );
-        try {
+            responseBody = CallVCClientAPI( payload );
             JsonNode apiResponse = objectMapper.readTree( responseBody );
             ((ObjectNode)apiResponse).put( "id", correlationId );
             responseBody = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(apiResponse);
         } catch (java.io.IOException ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( "Technical error" );
         }    
-
+        
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Content-Type", "application/json");    
         return ResponseEntity.ok()
@@ -402,7 +392,7 @@ public class ApiVCController {
           .body( responseBody );
     }
 
-    @RequestMapping(value = "/api/presentation-request-callback", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/presentation-request-callback", method = RequestMethod.POST, produces = "application/json", consumes = "application/json")
     public ResponseEntity<String> presentationRequestCallback( HttpServletRequest request
                                                              , @RequestHeader HttpHeaders headers
                                                              , @RequestBody String body ) {
@@ -431,6 +421,8 @@ public class ApiVCController {
                 cache.put( correlationId, json );
             }
         } catch (java.io.IOException ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( "Technical error" );
         }    
         
         return ResponseEntity.ok()
@@ -454,6 +446,8 @@ public class ApiVCController {
                 statusResponse.put("message", cacheData.path("message").asText() );
                 responseBody = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(statusResponse);
             } catch (java.io.IOException ex) {
+                ex.printStackTrace();
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( "Technical error" );
             }    
         }
         HttpHeaders responseHeaders = new HttpHeaders();
@@ -461,6 +455,76 @@ public class ApiVCController {
         return ResponseEntity.ok()
           .headers(responseHeaders)
           .body( responseBody );
+    }
+
+    // *********************************************************************************
+    // B2C
+    // *********************************************************************************
+    @RequestMapping(value = "/api/presentation-response-b2c", method = RequestMethod.POST, produces = "application/json", consumes = "application/json")
+    public ResponseEntity<String> presentationResponseB2C( HttpServletRequest request
+                                                             , @RequestHeader HttpHeaders headers
+                                                             , @RequestBody String body ) {
+        TraceHttpRequest( request );
+        lgr.info( body );
+        String responseBody = "";
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode b2cRequest = objectMapper.readTree( body );
+            String correlationId = b2cRequest.path("id").asText();
+            String data = cache.getIfPresent( correlationId ); 
+            if ( (data == null || data.isEmpty()) ) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body( formatB2CError( "Verifiable Credentials not presented" ) );
+            } 
+            JsonNode cacheData = objectMapper.readTree( data  );
+            ObjectNode b2cResponse = objectMapper.createObjectNode();
+            String didSubject = cacheData.path("presentationResponse").path("subject").asText();
+            String didIssuer = cacheData.path("presentationResponse").path("issuers").get(0).path("authority").asText();
+            JsonNode vcClaims = cacheData.path("presentationResponse").path("issuers").get(0).path("claims");
+            String firstName = getClaimValue( vcClaims, "firstName" );
+            String lastName = getClaimValue( vcClaims, "lastName" );
+            String displayName = getClaimValue( vcClaims, "displayName" );
+            if ( displayName == null || displayName.isEmpty() ) { 
+                displayName = firstName + " " + lastName;
+            }
+
+            String manifest = getDidManifest();        
+            JsonNode rootNode = objectMapper.readTree( manifest );
+            String credentialType = rootNode.path("id").asText();
+
+            b2cResponse.put("id", correlationId );
+            b2cResponse.put("credentialType", credentialType );
+            b2cResponse.put("iss", didIssuer );
+            b2cResponse.put("sub", didSubject );
+            b2cResponse.put("key", didSubject.replace("did:ion:", "did.ion.").split(":")[0] );
+            b2cResponse.put("tid", getClaimValue( vcClaims, "tid" ) );
+            b2cResponse.put("oid", getClaimValue( vcClaims, "sub" ) );
+            b2cResponse.put("username", getClaimValue( vcClaims, "username" ) );
+            b2cResponse.put("givenName", firstName );
+            b2cResponse.put("surName", lastName );
+            b2cResponse.put("displayName", displayName );
+            responseBody = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(b2cResponse);
+        } catch (java.io.IOException ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body( formatB2CError( "Technical error" ) );
+        }    
+        
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Content-Type", "application/json");    
+        return ResponseEntity.ok()
+          .headers(responseHeaders)
+          .body( responseBody );
+    }
+
+    private String formatB2CError( String message ) {
+        return "{\"version\": \"1.0.0\", \"status\": 400, \"userMessage\": \"{0}}\"}".replace( "{0}", message );
+    }
+
+    private String getClaimValue( JsonNode node, String name ) {
+        if ( node.has(name) ) { 
+            return node.path(name).asText();
+        } else {
+            return null;
+        }
     }
 
 } // cls

@@ -22,7 +22,7 @@ mvn clean package -DskipTests
 ```
 
 ### Run 
-The sample uses a few environment variables to work correctly. The script file `run-cmd` shows you which ones to set befor running the Java app. The first three lines comes from your authorization setup for how your app connects to your Azure Key Vault, see [Adding Authorization](https://github.com/cljung/did-samples/#adding-authorization). The last three lines determinds which of your credentials you want the sample to use. The `DidManifest` points to your manifest contract. The `AADVC.PRESENTATIONFILE` and the `AADVC.ISSUANCEFILE` points to the payload files in the `.\requests` directory you want to use. You can update these to use your own credentials.
+The sample uses a few environment variables to work correctly. The script file `run.cmd` shows you which ones to set befor running the Java app. The first three lines comes from your authorization setup for how your app connects to your Azure Key Vault, see [Adding Authorization](https://github.com/cljung/did-samples/#adding-authorization). The last three lines determinds which of your credentials you want the sample to use. The `DidManifest` points to your manifest contract. The `AADVC.PRESENTATIONFILE` and the `AADVC.ISSUANCEFILE` points to the payload files in the `.\requests` directory you want to use. You can update these to use your own credentials.
 
 ```json
 set AADVC.TenantId=<YOUR-AAD-TENANDID>
