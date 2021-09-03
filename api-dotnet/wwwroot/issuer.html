@@ -78,53 +78,61 @@
                                 .catch(error => document.getElementById("message").innerHTML = error)
                                 .then(response => {
                                     if (response.length > 0) {
-                                        //console.log(response)
+                                        console.log(response)
                                         respIssuanceReq = JSON.parse(response);
-                                        qrcode.makeCode(respIssuanceReq.url);
-                                        document.getElementById('qrText').style.display = "block";
-                                        document.getElementById('qrcodeFrame').style.display = "block";
-                                        document.getElementsByTagName("img")[2].src = respIssuanceReq.qrCode;
-                                        document.getElementById('sign-in').style.display = "none";
-                                        if (respIssuanceReq.pin) {
-                                            document.getElementById('pinCodeText').innerHTML = "Pin code: " + respIssuanceReq.pin;
-                                            document.getElementById('pinCodeText').style.display = "block";
+                                        if (respIssuanceReq.error_description) {
+                                            document.getElementById("message").innerHTML = respIssuanceReq.error_description;
+                                            document.getElementById('message-wrapper').style.display = "block";
+                                            respIssuanceReq = null;
+                                        } else {
+                                            qrcode.makeCode(respIssuanceReq.url);
+                                            document.getElementById('qrText').style.display = "block";
+                                            document.getElementById('qrcodeFrame').style.display = "block";
+                                            document.getElementsByTagName("img")[2].src = respIssuanceReq.qrCode;
+                                            document.getElementById('sign-in').style.display = "none";
+                                            if (respIssuanceReq.pin) {
+                                                document.getElementById('pinCodeText').innerHTML = "Pin code: " + respIssuanceReq.pin;
+                                                document.getElementById('pinCodeText').style.display = "block";
+                                            }
+                                            document.getElementById('selfAssertedClaims').style.display = "none";
                                         }
-                                        document.getElementById('selfAssertedClaims').style.display = "none";
                                     }
                                 })
 
-                            var checkStatus = setInterval(function () {
-                                fetch('api/issuer/issue-response?id=' + respIssuanceReq.id )
-                                    .then(response => response.text())
-                                    .catch(error => document.getElementById("message").innerHTML = error)
-                                    .then(response => {
-                                        if (response.length > 0) {
-                                            console.log(response)
-                                            respMsg = JSON.parse(response);
-                                            document.getElementById('message-wrapper').style.display = "block";
-                                            document.getElementById('qrText').style.display = "none";
-                                            document.getElementById('qrcodeFrame').style.display = "none";
-                                            document.getElementById('qrcode').style.display = "none";
-                                            document.getElementById('sign-in').textContent = 'Verify Again';
-                                            // respMsg.status == 1 -> QR Code scanned
-                                            if (respMsg.status == 1) {
-                                                document.getElementById('message').innerHTML = respMsg.message;
-                                                clearInterval(checkStatus);
+                            if (respIssuanceReq != null) {
+                                var checkStatus = setInterval(function () {
+                                    fetch('api/issuer/issue-response?id=' + respIssuanceReq.id)
+                                        .then(response => response.text())
+                                        .catch(error => document.getElementById("message").innerHTML = error)
+                                        .then(response => {
+                                            if (response.length > 0) {
+                                                console.log(response)
+                                                respMsg = JSON.parse(response);
+                                                document.getElementById('message-wrapper').style.display = "block";
+                                                document.getElementById('qrText').style.display = "none";
+                                                document.getElementById('qrcodeFrame').style.display = "none";
+                                                document.getElementById('qrcode').style.display = "none";
+                                                document.getElementById('sign-in').textContent = 'Verify Again';
+                                                // respMsg.status == 1 -> QR Code scanned
+                                                if (respMsg.status == 1) {
+                                                    document.getElementById('message').innerHTML = respMsg.message;
+                                                    clearInterval(checkStatus);
+                                                }
+                                                // respMsg.status == 2 -> VC issued
+                                                if (respMsg.status == 2) {
+                                                    document.getElementById('message').innerHTML = respMsg.message;
+                                                    clearInterval(checkStatus);
+                                                }
+                                                // respMsg.status == 99 -> VC issueance failed
+                                                if (respMsg.status == 99) {
+                                                    document.getElementById('message').innerHTML = respMsg.message;
+                                                    document.getElementById('message').style.textColor = "red";
+                                                    clearInterval(checkStatus);
+                                                }
                                             }
-                                            // respMsg.status == 2 -> VC issued
-                                            if (respMsg.status == 2) {
-                                                document.getElementById('message').innerHTML = respMsg.message;
-                                                clearInterval(checkStatus);
-                                            }
-                                            // respMsg.status == 99 -> VC issueance failed
-                                            if (respMsg.status == 99) {
-                                                document.getElementById('message').innerHTML = respMsg.message;
-                                                document.getElementById('message').style.textColor = "red";
-                                                clearInterval(checkStatus);
-                                            }
-                                        }
-                                    })
-                            }, 3000);
+                                        })
+                                }, 3000);
+                            }
 
                         })
 
@@ -148,13 +156,15 @@
                                     selfAssertedClaims = null;
                                     if (data.selfAssertedClaims) {                                        
                                         selfAssertedClaims = data.selfAssertedClaims;
-                                        document.getElementById('selfAssertedClaims').style.display = "block";
-                                        var idx = 1;
-                                        for (idx = 0; idx < Object.keys(selfAssertedClaims).length; idx++) {
-                                            var id = idx + 1;
-                                            document.getElementById('selfAssertedClaims' + id).style.display = "block";
-                                            document.getElementById('label-entry' + id).innerHTML = Object.keys(selfAssertedClaims)[idx];
-                                            document.getElementById('entry' + id).placeholder = selfAssertedClaims[Object.keys(selfAssertedClaims)[idx]];
+                                        if (Object.keys(selfAssertedClaims).length > 0) {
+                                            document.getElementById('selfAssertedClaims').style.display = "block";
+                                            var idx = 1;
+                                            for (idx = 0; idx < Object.keys(selfAssertedClaims).length; idx++) {
+                                                var id = idx + 1;
+                                                document.getElementById('selfAssertedClaims' + id).style.display = "block";
+                                                document.getElementById('label-entry' + id).innerHTML = Object.keys(selfAssertedClaims)[idx];
+                                                document.getElementById('entry' + id).placeholder = selfAssertedClaims[Object.keys(selfAssertedClaims)[idx]];
+                                            }
                                         }
                                     }
                                 }

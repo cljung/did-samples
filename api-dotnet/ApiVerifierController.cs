@@ -15,6 +15,7 @@ using Newtonsoft.Json.Linq;
 using client_api_test_service_dotnet.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
 
 namespace client_api_test_service_dotnet
 {
@@ -26,70 +27,42 @@ namespace client_api_test_service_dotnet
 
         public ApiVerifierController(IConfiguration configuration, IOptions<AppSettingsModel> appSettings, IMemoryCache memoryCache, IWebHostEnvironment env, ILogger<ApiVerifierController> log) : base(configuration, appSettings, memoryCache, env, log)
         {
-            GetPresentationRequest();
+            GetPresentationManifest();
         }
 
         protected string GetApiPath() {
             return string.Format("{0}/api/verifier", GetRequestHostName());
         }
 
-        protected JObject GetPresentationRequest() {
-            string json = null;
-            if (GetCachedValue("presentationRequest", out json)) {
-                return JObject.Parse(json);
-            }
-            // see if file path was passed on command line
-            string presentationRequestFile = _configuration.GetValue<string>("PresentationRequestConfigFile");
-            if (string.IsNullOrEmpty(presentationRequestFile)) {
-                presentationRequestFile = PresentationRequestConfigFile;
-            } 
-            presentationRequestFile = presentationRequestFile.Replace("%cd%", System.IO.Directory.GetCurrentDirectory() );
-            if (!System.IO.File.Exists(presentationRequestFile)) {
-                _log.LogError( "File not found: {0}", presentationRequestFile );
-                return null;
-            }
-            _log.LogTrace("PresentationRequest file: {0}", presentationRequestFile);
-            json = System.IO.File.ReadAllText(presentationRequestFile);
-            JObject config = JObject.Parse(json);
-
-            // download manifest and cache it
-            string contents;
-            HttpStatusCode statusCode = HttpStatusCode.OK;
-            if (!HttpGet(config["presentation"]["requestedCredentials"][0]["manifest"].ToString(), out statusCode, out contents)) {
-                _log.LogError("HttpStatus {0} fetching manifest {1}", statusCode, config["presentation"]["requestedCredentials"][0]["manifest"].ToString() );
-                return null;
-            }
-            CacheValueWithNoExpiery("manifestPresentation", contents);
-            JObject manifest = JObject.Parse(contents);
-
-            // update presentationRequest from manifest with things that don't change for each request
-            if (!config["authority"].ToString().StartsWith("did:ion:")) {
-                config["authority"] = manifest["input"]["issuer"];
-            }
-            config["registration"]["clientName"] = AppSettings.client_name;
-
-            var requestedCredentials = config["presentation"]["requestedCredentials"][0];
-            if (requestedCredentials["type"].ToString().Length == 0 ) {
-                requestedCredentials["type"] = manifest["id"];
-            }
-            requestedCredentials["trustedIssuers"][0] = manifest["input"]["issuer"]; //VCSettings.didIssuer;
-
-            json = JsonConvert.SerializeObject(config);
-            CacheValueWithNoExpiery("presentationRequest", json);
-            return config;
-        }
         protected JObject GetPresentationManifest() {
             if (GetCachedValue("manifestPresentation", out string json)) {
                 return JObject.Parse(json); ;
             }
-            return null;
+            // download manifest and cache it
+            string contents;
+            HttpStatusCode statusCode = HttpStatusCode.OK;
+            if (!HttpGet( this.AppSettings.DidManifest, out statusCode, out contents)) {
+                _log.LogError("HttpStatus {0} fetching manifest {1}", statusCode, this.AppSettings.DidManifest );
+                return null;
+            }
+            CacheValueWithNoExpiery("manifestPresentation", contents);
+            return JObject.Parse(contents);
         }
+        protected ActionResult ReturnErrorB2C(string message) {
+            var msg = new {
+                version = "1.0.0",
+                status = 400,
+                userMessage = message
+            };
+            return new ContentResult { StatusCode = 409, ContentType = "application/json", Content = JsonConvert.SerializeObject(msg) };
+        }
+
         /// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// REST APIs
         /// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        [HttpGet]
-        public async Task<ActionResult> echo() {
+        [HttpGet("/api/verifier/echo")]
+        public ActionResult Echo() {
             TraceHttpRequest();
             try
             {
@@ -112,34 +85,48 @@ namespace client_api_test_service_dotnet
         }
         [HttpGet]
         [Route("/api/verifier/logo.png")]
-        public async Task<ActionResult> logo() {
+        public ActionResult Logo() {
             TraceHttpRequest();
             JObject manifest = GetPresentationManifest();
             return Redirect( manifest["display"]["card"]["logo"]["uri"].ToString() );
         }
 
         [HttpGet("/api/verifier/presentation-request")]
-        public async Task<ActionResult> presentationReference() {
+        public ActionResult PresentationReference() {
             TraceHttpRequest();
             try {
-                JObject presentationRequest = GetPresentationRequest();
-                if ( presentationRequest == null) {
-                    return ReturnErrorMessage( "Presentation Request Config File not found" );
-                }
                 // The 'state' variable is the identifier between the Browser session, this API and VC client API doing the validation.
                 // It is passed back to the Browser as 'Id' so it can poll for status, and in the presentationCallback (presentation_verified)
                 // we use it to correlate which verification that got completed, so we can update the cache and tell the correct Browser session
                 // that they are done
                 string correlationId = Guid.NewGuid().ToString();
 
-                // set details about where we want the VC Client API callback
-                var callback = presentationRequest["callback"];
-                callback["url"] = string.Format("{0}/presentationCallback", GetApiPath());
-                callback["state"] = correlationId;
-                callback["nounce"] = Guid.NewGuid().ToString();
-                callback["headers"]["my-api-key"] = this.AppSettings.ApiKey;
+                VCPresentationRequest request = new VCPresentationRequest() {
+                    includeQRCode = false,
+                    authority = this.AppSettings.VerifierAuthority,
+                    registration = new Registration() {
+                        clientName = this.AppSettings.client_name
+                    },
+                    callback = new Callback() {
+                        url = string.Format("{0}/presentation-callback", GetApiPath()),
+                        state = correlationId,
+                        headers = new Dictionary<string, string>() { { "my-api-key", this.AppSettings.ApiKey } }
+                    },
+                    presentation = new Presentation() {
+                        includeReceipt = true,
+                        requestedCredentials = new List<RequestedCredential>()
+                    }
+                };
+                request.presentation.requestedCredentials.Add(new RequestedCredential() {
+                    type = this.AppSettings.CredentialType,
+                    manifest = this.AppSettings.DidManifest,
+                    purpose = this.AppSettings.Purpose,
+                    trustedIssuers = new List<string>(new string[] { this.AppSettings.IssuerAuthority })
+                });
 
-                string jsonString = JsonConvert.SerializeObject(presentationRequest);
+                string jsonString = JsonConvert.SerializeObject(request, Formatting.None, new JsonSerializerSettings {
+                    NullValueHandling = NullValueHandling.Ignore
+                });
                 _log.LogTrace( "VC Client API Request\n{0}", jsonString );
 
                 string contents = "";
@@ -159,53 +146,22 @@ namespace client_api_test_service_dotnet
             }
         }
 
-        [HttpPost]
-        public async Task<ActionResult> presentationCallback() {
+        [HttpPost("/api/verifier/presentation-callback")]
+        public ActionResult PresentationCallback() {
             TraceHttpRequest();
             try {
                 string body = GetRequestBody();
                 _log.LogTrace(body);
-                JObject presentationResponse = JObject.Parse(body);
-                string correlationId = presentationResponse["state"].ToString();
-                string code = presentationResponse["code"].ToString();
-
-                // request_retrieved == QR code has been scanned and request retrieved from VC Client API
-                if ( code == "request_retrieved") {
-                    _log.LogTrace("presentationCallback() - request_retrieved");
-                    string requestId = presentationResponse["requestId"].ToString();
-                    var cacheData = new {
-                        status = 1,
-                        message = "QR Code is scanned. Waiting for validation..."
-                    };
-                    CacheJsonObjectWithExpiery( correlationId, cacheData );
-                }
-
-                // presentation_verified == The VC Client API has received and validateed the presented VC
-                if ( code == "presentation_verified") {
-                    var claims = presentationResponse["issuers"][0]["claims"];
-                    _log.LogTrace("presentationCallback() - presentation_verified\n{0}", claims );
-
-                    // build a displayName so we can tell the called who presented their VC
-                    JObject vcClaims = (JObject)presentationResponse["issuers"][0]["claims"];
-                    string displayName = "";
-                    if (vcClaims.ContainsKey("displayName"))
-                         displayName = vcClaims["displayName"].ToString();
-                    else displayName = string.Format("{0} {1}", vcClaims["firstName"], vcClaims["lastName"]);
-
-                    var cacheData = new {
-                        status = 2,
-                        message = displayName,
-                        presentationResponse = presentationResponse
-                    };
-                    CacheJsonObjectWithExpiery(correlationId, cacheData );
-                }
+                VCCallbackEvent callback = JsonConvert.DeserializeObject<VCCallbackEvent>(body);
+                CacheObjectWithExpiery( callback.state, callback );
                 return new OkResult();
             } catch (Exception ex) {
                 return ReturnErrorMessage(ex.Message);
             }
         }
+
         [HttpGet("/api/verifier/presentation-response-status")]
-        public async Task<ActionResult> presentationResponse() {
+        public ActionResult PresentationResponseStatus() {
             TraceHttpRequest();
             try {
                 // This is out caller that call this to poll on the progress and result of the presentation
@@ -213,28 +169,33 @@ namespace client_api_test_service_dotnet
                 if (string.IsNullOrEmpty(correlationId)) {
                     return ReturnErrorMessage("Missing argument 'id'");
                 }
-                JObject cacheData = null;
-                if ( GetCachedJsonObject(correlationId, out cacheData )) { 
-                    _log.LogTrace( $"status={cacheData["status"].ToString()}, message={cacheData["message"].ToString()}" );
-                    //RemoveCacheValue( state ); // if you're not using B2C integration, uncomment this line
-                    return ReturnJson(TransformCacheDataToBrowserResponse(cacheData));
+
+                if ( GetCachedObject<VCCallbackEvent>(correlationId, out VCCallbackEvent callback) ) {
+                    if ( callback.code == "request_retrieved" ) {
+                        return ReturnJson(JsonConvert.SerializeObject(new { status = 1, message = "QR Code is scanned. Waiting for validation..." } ));
+                    }
+                    if (callback.code == "presentation_verified") {
+                        string displayName = "";
+                        if (callback.issuers[0].claims.ContainsKey("displayName"))
+                             displayName = callback.issuers[0].claims["displayName"];
+                        else displayName = string.Format("{0} {1}", callback.issuers[0].claims["firstName"], callback.issuers[0].claims["lastName"]);
+                        var obj = new { status = 2, message = displayName };
+                        JObject resp = JObject.Parse(JsonConvert.SerializeObject( new { status = 2, message = displayName })  );
+                        foreach (KeyValuePair<string, string> kvp in callback.issuers[0].claims ) {
+                            resp.Add(new JProperty(kvp.Key, kvp.Value));
+                        }                        
+                        return ReturnJson(JsonConvert.SerializeObject(resp));
+                    }                    
                 }
+
                 return new OkResult();
             } catch (Exception ex) {
                 return ReturnErrorMessage( ex.Message );
             }
         }
 
-        private string TransformCacheDataToBrowserResponse( JObject cacheData ) {
-            // we do this not to give all the cacheData to the browser
-            var browserData = new {
-                status = cacheData["status"],
-                message = cacheData["message"]
-            };
-            return JsonConvert.SerializeObject(browserData);
-        }
         [HttpPost("/api/verifier/presentation-response-b2c")]
-        public async Task<ActionResult> presentationResponseB2C() {
+        public ActionResult PresentationResponseB2C() {
             TraceHttpRequest();
             try {
                 string body = GetRequestBody();
@@ -244,64 +205,39 @@ namespace client_api_test_service_dotnet
                 if (string.IsNullOrEmpty(correlationId)) {
                     return ReturnErrorMessage("Missing argument 'id'");
                 }
-                JObject cacheData = null;
-                if ( !GetCachedJsonObject(correlationId, out cacheData )) { 
+                VCCallbackEvent callback = null;
+                if (!GetCachedObject<VCCallbackEvent>(correlationId, out callback)) {
                     return ReturnErrorB2C("Verifiable Credentials not presented"); // 409
                 }
                 // remove cache data now, because if we crash, we don't want to get into an infinite loop of crashing 
                 RemoveCacheValue(correlationId);
 
-                // get the payload from the presentation-response callback
-                var presentationResponse = cacheData["presentationResponse"];
-                // get the claims tha the VC Client API provides to us from the presented VC
-                JObject vcClaims = (JObject)presentationResponse["issuers"][0]["claims"];
-
-                // get the token that was presented and dig out the VC credential from it since we want to return the
-                // Issuer DID and the holders DID to B2C
-                JObject didIdToken = JWTTokenToJObject(presentationResponse["receipt"]["id_token"].ToString());
-                var credentialType = didIdToken["presentation_submission"]["descriptor_map"][0]["id"].ToString();
-                var presentationPath = didIdToken["presentation_submission"]["descriptor_map"][0]["path"].ToString();
-                JObject presentation = JWTTokenToJObject(didIdToken.SelectToken(presentationPath).ToString());
-                string vcToken = presentation["vp"]["verifiableCredential"][0].ToString();
-                JObject vc = JWTTokenToJObject(vcToken);
-
-                string displayName = null;
-                if (vcClaims.ContainsKey("displayName"))
-                     displayName = vcClaims["displayName"].ToString();
-                else displayName = string.Format("{0} {1}", vcClaims["firstName"], vcClaims["lastName"]);
-
-                // these claims are optional
-                string sub = null;
-                string tid = null;
-                string username = null;
-
-                if (vcClaims.ContainsKey("tid")) 
-                    tid = vcClaims["tid"].ToString();
-                if (vcClaims.ContainsKey("sub"))
-                    sub = vcClaims["sub"].ToString();
-                if (vcClaims.ContainsKey("username"))
-                    username = vcClaims["username"].ToString();
-
-                var b2cResponse = new {
+                // setup the response that we are returning to B2C
+                var obj = new {
                     id = correlationId,
                     credentialsVerified = true,
-                    credentialType = credentialType,
-                    displayName = displayName,
-                    givenName = vcClaims["firstName"].ToString(),
-                    surName = vcClaims["lastName"].ToString(),
-                    iss = vc["iss"].ToString(),
-                    sub = vc["sub"].ToString(),
-                    key = vc["sub"].ToString().Replace("did:ion:","did.ion.").Split(":")[0],
-                    oid = sub,
-                    tid = tid,
-                    username = username
+                    credentialType = callback.issuers[0].type[callback.issuers[0].type.Length - 1], // last
+                    domain = callback.issuers[0].domain,
+                    domainVerified = callback.issuers[0].verified,
+                    iss = callback.issuers[0].authority,
+                    sub = callback.subject,
+                    // key is intended to be user in user's profile 'identities' collection as a signInName,
+                    // and it can't have colons, therefor we modify the value (and clip at following :)
+                    key = callback.subject.Replace("did:ion:", "did.ion.").Split(":")[0]
                 };
+                JObject b2cResponse = JObject.Parse(JsonConvert.SerializeObject(obj));
+                // add all the additional claims in the VC as claims to B2C
+                foreach (KeyValuePair<string, string> kvp in callback.issuers[0].claims) {
+                    if ( kvp.Key == "sub" ) // we already have a 'sub' above, so if you added that to your VC claims, it will show up as 'oid'
+                         b2cResponse.Add(new JProperty("oid", kvp.Value));
+                    else b2cResponse.Add(new JProperty(kvp.Key, kvp.Value));
+                }
                 string resp = JsonConvert.SerializeObject(b2cResponse);
                 _log.LogTrace(resp);
                 return ReturnJson( resp );
             } catch (Exception ex) {
                 return ReturnErrorMessage(ex.Message);
             }
-        }
+        }        
     } // cls
 } // ns

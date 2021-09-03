@@ -63,12 +63,6 @@ namespace client_api_test_service_dotnet
         protected ActionResult ReturnJson( string json ) {
             return new ContentResult { ContentType = "application/json", Content = json };
         }
-        protected ActionResult ReturnErrorB2C(string message) {
-            var msg = new {
-                version = "1.0.0", status = 400, userMessage = message
-            };
-            return new ContentResult { StatusCode = 409, ContentType = "application/json", Content = JsonConvert.SerializeObject(msg) };
-        }
         protected async Task<(string, string)> GetAccessToken() {
             IConfidentialClientApplication app = ConfidentialClientApplicationBuilder.Create( this.AppSettings.ClientId )
                                                         .WithClientSecret( this.AppSettings.ClientSecret )
@@ -124,30 +118,22 @@ namespace client_api_test_service_dotnet
             return new System.IO.StreamReader(this.Request.Body).ReadToEndAsync().Result;
         }
 
-        protected JObject JWTTokenToJObject( string token ) {
-            string[] parts = token.Split(".");
-            parts[1] = parts[1].PadRight(4 * ((parts[1].Length + 3) / 4), '=');
-            return JObject.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(parts[1])));
+        protected bool GetCachedObject<T>(string key, out T Object) {
+            Object = default(T);
+            object val = null;
+            bool rc;
+            if ( (rc = _cache.TryGetValue(key, out val) ) ) {
+                Object = (T)Convert.ChangeType(val, typeof(T));
+            }
+            return rc;
         }
-
         protected bool GetCachedValue(string key, out string value) {
             return _cache.TryGetValue(key, out value);
         }
-        protected bool GetCachedJsonObject(string key, out JObject value) {
-            value = null;
-            if ( !_cache.TryGetValue(key, out string buf) ) {
-                return false;
-            } else {
-                value = JObject.Parse(buf);
-                return true;
-            }
+        protected void CacheObjectWithExpiery(string key, object Object) {
+            _cache.Set(key, Object, DateTimeOffset.Now.AddSeconds(this.AppSettings.CacheExpiresInSeconds));
         }
-        protected void CacheJsonObjectWithExpiery( string key, object jsonObject ) {
-            _cache.Set( key, JsonConvert.SerializeObject(jsonObject), DateTimeOffset.Now.AddSeconds(this.AppSettings.CacheExpiresInSeconds));
-        }
-        protected void CacheValueWithExpiery(string key, string value) {
-            _cache.Set(key, value, DateTimeOffset.Now.AddSeconds(this.AppSettings.CacheExpiresInSeconds));
-        }
+
         protected void CacheValueWithNoExpiery(string key, string value) {
             _cache.Set(key, value );
         }

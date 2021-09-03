@@ -51,10 +51,6 @@ namespace client_api_test_service_dotnet
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            Console.WriteLine("IssuanceRequestConfigFile={0}\nPresentationRequestConfigFile={1}"
-                    , System.Environment.GetEnvironmentVariable("IssuanceRequestConfigFile")
-                    , System.Environment.GetEnvironmentVariable("PresentationRequestConfigFile")
-                    );
             if ( env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

@@ -51,42 +51,48 @@
                                     if (response.length > 0) {
                                         console.log(response)
                                         respPresReq = JSON.parse(response);
-                                        qrcode.makeCode(respPresReq.url);
-                                        document.getElementById('qrText').style.display = "block";
-                                        document.getElementById('qrcodeFrame').style.display = "block";
-                                        document.getElementsByTagName("img")[2].src = respPresReq.qrCode;
-                                        //document.getElementById('qrcodeImg').src = resp.qrCode;
-                                        //document.getElementById('qrcodeImg').style.display = "block";
-                                        document.getElementById('sign-in').style.display = "none";
+                                        if (respPresReq.error_description) {
+                                            document.getElementById("message").innerHTML = respPresReq.error_description;
+                                            document.getElementById('message-wrapper').style.display = "block";
+                                            respPresReq = null;
+                                        } else {
+                                            qrcode.makeCode(respPresReq.url);
+                                            document.getElementById('qrText').style.display = "block";
+                                            document.getElementById('qrcodeFrame').style.display = "block";
+                                            document.getElementsByTagName("img")[2].src = respPresReq.qrCode;
+                                            //document.getElementById('qrcodeImg').src = resp.qrCode;
+                                            //document.getElementById('qrcodeImg').style.display = "block";
+                                            document.getElementById('sign-in').style.display = "none";
+
+                                            var checkStatus = setInterval(function () {
+                                                fetch('api/verifier/presentation-response-status?id=' + respPresReq.id)
+                                                    .then(response => response.text())
+                                                    .catch(error => document.getElementById("message").innerHTML = error)
+                                                    .then(response => {
+                                                        if (response.length > 0) {
+                                                            console.log(response)
+                                                            respMsg = JSON.parse(response);
+                                                            document.getElementById('message-wrapper').style.display = "block";
+                                                            document.getElementById('qrText').style.display = "none";
+                                                            document.getElementById('qrcodeFrame').style.display = "none";
+                                                            document.getElementById('qrcode').style.display = "none";
+                                                            document.getElementById('sign-in').textContent = 'Verify Again';
+                                                            // respMsg.status == 1 -> QR Code scanned
+                                                            if (respMsg.status == 1) {
+                                                                document.getElementById('message').innerHTML = respMsg.message;
+                                                            }
+                                                            // respMsg.status == 2 -> VC presented and validated
+                                                            if (respMsg.status == 2) {
+                                                                document.getElementById('message').innerHTML = respMsg.message + " validated successfully as " + cardTitle;
+                                                                clearInterval(checkStatus);
+                                                            }
+                                                        }
+                                                    })
+                                            }, 3000);
+
+                                        }
                                     }
                                 })
-
-                            var checkStatus = setInterval(function () {
-                                fetch('api/verifier/presentation-response-status?id=' + respPresReq.id )
-                                    .then(response => response.text())
-                                    .catch(error => document.getElementById("message").innerHTML = error)
-                                    .then(response => {
-                                        if (response.length > 0) {
-                                            console.log(response)
-                                            respMsg = JSON.parse(response);
-                                            document.getElementById('message-wrapper').style.display = "block";
-                                            document.getElementById('qrText').style.display = "none";
-                                            document.getElementById('qrcodeFrame').style.display = "none";
-                                            document.getElementById('qrcode').style.display = "none";
-                                            document.getElementById('sign-in').textContent = 'Verify Again';
-                                            // respMsg.status == 1 -> QR Code scanned
-                                            if (respMsg.status == 1) {
-                                                document.getElementById('message').innerHTML = respMsg.message;
-                                            }
-                                            // respMsg.status == 2 -> VC presented and validated
-                                            if (respMsg.status == 2) {
-                                                document.getElementById('message').innerHTML = respMsg.message + " validated successfully as " + cardTitle;
-                                                clearInterval(checkStatus);
-                                            }
-                                        }
-                                    })
-                            }, 3000);
-
                         })
 
                         fetch('api/verifier/echo')
