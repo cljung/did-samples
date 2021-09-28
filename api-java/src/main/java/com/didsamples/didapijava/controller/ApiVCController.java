@@ -87,7 +87,7 @@ public class ApiVCController {
         String basePath = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + path + "/";
         return basePath;
     }
-    public static void TraceHttpRequest( HttpServletRequest request ) {
+    public static void traceHttpRequest( HttpServletRequest request ) {
         String method = request.getMethod();
         String requestURL = request.getRequestURL().toString();
         String queryString = request.getQueryString();
@@ -98,7 +98,7 @@ public class ApiVCController {
         lgr.info( method + " " + requestURL );
     }
 
-    private static String ReadFileAllText(String filePath) 
+    private static String readFileAllText(String filePath) 
     {
         StringBuilder contentBuilder = new StringBuilder();
         try (Stream<String> stream = Files.lines( Paths.get(filePath), StandardCharsets.UTF_8)) {
@@ -125,7 +125,7 @@ public class ApiVCController {
         return manifest;
     }
 
-    private String CallVCClientAPI( String payload ) {
+    private String callVCClientAPI( String payload ) {
         String accessToken = "";
         try {
             accessToken = cache.getIfPresent( "MSALAccessToken" );
@@ -140,7 +140,7 @@ public class ApiVCController {
             return null;
         }
         String endpoint = apiEndpoint.replace("{0}", tenantId );
-        lgr.info( "CallVCClientAPI: " + endpoint + "\n" + payload );
+        lgr.info( "callVCClientAPI: " + endpoint + "\n" + payload );
         WebClient client = WebClient.create();
         WebClient.ResponseSpec responseSpec = client.post()
                                                     .uri( endpoint )
@@ -154,11 +154,12 @@ public class ApiVCController {
         return responseBody;
     }
 
-    public Integer generatePinCode( Integer length ) {
+    public String generatePinCode( Integer length ) {
         int min = 0;
         int max = (int)(Integer.parseInt( "999999999999999999999".substring(0, length) ));
-        return (Integer)(int)((Math.random() * (max - min)) + min);
-    }   
+        Integer pin = (Integer)(int)((Math.random() * (max - min)) + min);
+        return String.format( String.format("%%0%dd", length), pin );
+    }  
     
     private String getAccessTokenByClientCredentialGrant() throws Exception {
         String authority = aadAuthority.replace("{0}", tenantId );
@@ -198,7 +199,7 @@ public class ApiVCController {
 
     @GetMapping("/api/echo")
     public ResponseEntity<String> echo( HttpServletRequest request, @RequestHeader HttpHeaders headers ) {
-        TraceHttpRequest( request );
+        traceHttpRequest( request );
 
         String basePath = getBasePath( request );
         String manifest = getDidManifest();        
@@ -229,7 +230,7 @@ public class ApiVCController {
 
     @GetMapping("/api/manifest")
     public ResponseEntity<String> manifest( HttpServletRequest request ) {
-        TraceHttpRequest( request );
+        traceHttpRequest( request );
         String manifest = getDidManifest();        
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Content-Type", "application/json");    
@@ -243,12 +244,12 @@ public class ApiVCController {
     // *********************************************************************************
     @GetMapping("/api/issue-request")
     public ResponseEntity<String> issueRequest( HttpServletRequest request, @RequestHeader HttpHeaders headers ) {
-        TraceHttpRequest( request );
+        traceHttpRequest( request );
 
         lgr.info( "IssuanceJsonFile=" + IssuanceJsonFile );
         String jsonRequest = cache.getIfPresent("IssuanceJsonFile");
         if ( jsonRequest == null || jsonRequest.isEmpty() ) {
-            jsonRequest = ReadFileAllText( IssuanceJsonFile );
+            jsonRequest = readFileAllText( IssuanceJsonFile );
         }
 
         String callback = getBasePath( request ) + "api/issue-request-callback";
@@ -257,7 +258,7 @@ public class ApiVCController {
         String payload = "{}";
         ObjectMapper objectMapper = new ObjectMapper();
         Integer pinCodeLength = 0;
-        Integer pinCode = 0;
+        String pinCode = null;
         String responseBody = "";
         try {
             JsonNode rootNode = objectMapper.readTree( jsonRequest );
@@ -275,7 +276,7 @@ public class ApiVCController {
                 }
             }
             payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootNode);
-            responseBody = CallVCClientAPI( payload );
+            responseBody = callVCClientAPI( payload );
             JsonNode apiResponse = objectMapper.readTree( responseBody );
             ((ObjectNode)apiResponse).put( "id", correlationId );
             if ( pinCodeLength > 0 ) {
@@ -298,20 +299,28 @@ public class ApiVCController {
     public ResponseEntity<String> issueRequestCallback( HttpServletRequest request
                                                       , @RequestHeader HttpHeaders headers
                                                       , @RequestBody String body ) {
-        TraceHttpRequest( request );
+        traceHttpRequest( request );
         lgr.info( body );
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             JsonNode presentationResponse = objectMapper.readTree( body );
-            String correlationId = presentationResponse.path("state").asText();
             String code = presentationResponse.path("code").asText();
-            String json = "";
-            if ( code.equals( "request_retrieved" ) ) {
-                ObjectNode data = objectMapper.createObjectNode();
-                data.put("status", 1 );
+            ObjectNode data = null;
+            if ( code.equals( "request_retrieved" )  ) {
+                data = objectMapper.createObjectNode();
                 data.put("message", "QR Code is scanned. Waiting for issuance to complete..." );
-                json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data);
-                cache.put( correlationId, json );
+            }
+            if ( code.equals("issuance_successful") ) {
+                data = objectMapper.createObjectNode();
+                data.put("message", "Credential successfully issued" );
+            }
+            if ( code.equals( "issuance_error" ) ) {
+                data = objectMapper.createObjectNode();
+                data.put("message", presentationResponse.path("error").path("message").asText() );
+            }
+            if ( data != null ) {
+                data.put("status", code );
+                cache.put( presentationResponse.path("state").asText(), objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data) );
             }
         } catch (java.io.IOException ex) {
             ex.printStackTrace();
@@ -326,7 +335,7 @@ public class ApiVCController {
     public ResponseEntity<String> issueResponseStatus( HttpServletRequest request
                                                             , @RequestHeader HttpHeaders headers
                                                             , @RequestParam String id ) {
-        TraceHttpRequest( request );
+        traceHttpRequest( request );
 
         String responseBody = "";
         String data = cache.getIfPresent( id ); // id == correlationId
@@ -355,12 +364,12 @@ public class ApiVCController {
     // *********************************************************************************
     @GetMapping("/api/presentation-request")
     public ResponseEntity<String> presentationRequest( HttpServletRequest request, @RequestHeader HttpHeaders headers ) {
-        TraceHttpRequest( request );
+        traceHttpRequest( request );
 
         lgr.info( "presentationJsonFIle=" + presentationJsonFIle );
         String jsonRequest = cache.getIfPresent("presentationJsonFIle");
         if ( jsonRequest == null || jsonRequest.isEmpty() ) {
-            jsonRequest = ReadFileAllText( presentationJsonFIle );
+            jsonRequest = readFileAllText( presentationJsonFIle );
         }
 
         String callback = getBasePath( request ) + "api/presentation-request-callback";
@@ -376,7 +385,7 @@ public class ApiVCController {
             ((ObjectNode)(rootNode.path("callback"))).put("state", correlationId );
             ((ObjectNode)(rootNode.path("callback").path("headers"))).put("my-api-key", apiKey );
             payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootNode);
-            responseBody = CallVCClientAPI( payload );
+            responseBody = callVCClientAPI( payload );
             JsonNode apiResponse = objectMapper.readTree( responseBody );
             ((ObjectNode)apiResponse).put( "id", correlationId );
             responseBody = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(apiResponse);
@@ -396,29 +405,27 @@ public class ApiVCController {
     public ResponseEntity<String> presentationRequestCallback( HttpServletRequest request
                                                              , @RequestHeader HttpHeaders headers
                                                              , @RequestBody String body ) {
-        TraceHttpRequest( request );
+        traceHttpRequest( request );
         lgr.info( body );
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             JsonNode presentationResponse = objectMapper.readTree( body );
             String correlationId = presentationResponse.path("state").asText();
             String code = presentationResponse.path("code").asText();
-            String json = "";
+            ObjectNode data = null;
+
             if ( code.equals( "request_retrieved" ) ) {
-                ObjectNode data = objectMapper.createObjectNode();
-                data.put("status", 1 );
+                data = objectMapper.createObjectNode();
                 data.put("message", "QR Code is scanned. Waiting for validation..." );
-                json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data);
-                cache.put( correlationId, json );
             }
             if ( code.equals( "presentation_verified") ) {
-                ObjectNode data = objectMapper.createObjectNode();
-                String displayName = presentationResponse.path("issuers").get(0).path("claims").path("displayName").asText();
-                data.put("status", 2 );
-                data.put("message", displayName );
-                data.put("presentationResponse", presentationResponse );
-                json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data);
-                cache.put( correlationId, json );
+                data = objectMapper.createObjectNode();
+                data.put("message", presentationResponse.path("issuers").get(0).path("claims").path("displayName").asText() );
+                data.set("presentationResponse", presentationResponse );
+            }
+            if ( data != null ) {
+                data.put("status", code );
+                cache.put( presentationResponse.path("state").asText(), objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data) );
             }
         } catch (java.io.IOException ex) {
             ex.printStackTrace();
@@ -433,7 +440,7 @@ public class ApiVCController {
     public ResponseEntity<String> presentationResponseStatus( HttpServletRequest request
                                                             , @RequestHeader HttpHeaders headers
                                                             , @RequestParam String id ) {
-        TraceHttpRequest( request );
+        traceHttpRequest( request );
 
         String responseBody = "";
         String data = cache.getIfPresent( id ); // id == correlationId
@@ -464,7 +471,7 @@ public class ApiVCController {
     public ResponseEntity<String> presentationResponseB2C( HttpServletRequest request
                                                              , @RequestHeader HttpHeaders headers
                                                              , @RequestBody String body ) {
-        TraceHttpRequest( request );
+        traceHttpRequest( request );
         lgr.info( body );
         String responseBody = "";
         try {

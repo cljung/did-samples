@@ -74,12 +74,12 @@
                                             document.getElementById('qrcodeFrame').style.display = "none";
                                             document.getElementById('qrcode').style.display = "none";
                                             document.getElementById('sign-in').textContent = 'Verify Again';
-                                            // respMsg.status == 1 -> QR Code scanned
-                                            if (respMsg.status == 1) {
+                                            // respMsg.status == request_retrieved -> QR Code scanned
+                                            if (respMsg.status == "request_retrieved") {
                                                 document.getElementById('message').innerHTML = respMsg.message;
                                             }
-                                            // respMsg.status == 2 -> VC presented and validated
-                                            if (respMsg.status == 2) {
+                                            // respMsg.status == presentation_verified -> VC presented and validated
+                                            if (respMsg.status == "presentation_verified") {
                                                 document.getElementById('message').innerHTML = respMsg.message + " validated successfully as " + cardTitle;
                                                 clearInterval(checkStatus);
                                             }
