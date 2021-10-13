@@ -95,6 +95,7 @@ and finally issue the command `copy function.json function.proj`. This will crea
 Open the file and copy-n-paste over the contents of the file from the same file in this github repo. Finally, open `run.csx`, make some unimportant change and press `Save` to see that there are no errors.
 
 The Azure Function uses Azure Table Storage to hold the extra claims per user. You need to create an Azure Storage account and add the connect string in the configuration for it.
+This configuration should be added under `Applictation settings`.
 
 ```json
   {
