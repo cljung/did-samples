@@ -4,6 +4,8 @@ This sample is an ASPNet core webapp that uses Azure AD B2C as its authenticatio
 ## Live sample deployment
 There is a live sample deployment that you can test [here](https://cljung-did-idtokenhint.azurewebsites.net/). Since it is B2C, you can use the self-service sign-up functionality and create your own account. Then you can issue yourself a VC.
 
+![Screenshot](screenshot.png)
+
 ## Updating appsettings.json
 The app's config file contains two distinct sections that needs to be updated - one for Azure AD B2C and the other for Azure AD Verifiable Credentials.
 
