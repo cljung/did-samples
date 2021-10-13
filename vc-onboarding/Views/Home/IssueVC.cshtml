@@ -22,17 +22,15 @@
                     <td>@claim.Value</td>
                 </tr>
             }
-            <tr>
-                <td>title</td>
-                <td><input id="idTitle" type="text" placeholder="Select your prefered title" /></td>
-            </tr>
-            <tr>
-                <td>preferedLanguage</td>
-                <td><input id="idLanguage" type="text" placeholder="en-us" /></td>
-            </tr>
+            @foreach (var claim in (Dictionary<string, string>)ViewData["vcClaimsSelfAsserted"]) {
+                <tr>
+                    <td>@claim.Key</td>
+                    <td><input id="@claim.Key" type="text" placeholder="@claim.Value" class="selfAsserted" /></td>
+                </tr>
+            }
             <tr>
                 <td>DID</td>
-                <td><a id="idIon" href="https://identity.foundation/ion/explorer/?did=" target="_blank">View Issuer's DID with identity.foundation/explorer</a></td>
+                <td><a id="idIon" href="https://identity.foundation/ion/explorer/?did=" target="_blank">View DID with identity.foundation/explorer</a></td>
             </tr>
         </table>
     </div>
@@ -61,7 +59,7 @@
         var signIn = document.getElementById('sign-in');
         var qrcode = new QRCode("qrcode", { width: 300, height: 300 });
 
-        document.getElementById('idLanguage').innerHTML = navigator.language;
+        //document.getElementById('idLanguage').innerHTML = navigator.language;
         document.getElementById('message').innerHTML = "Preparing QR code...";
 
         var apiEndpoint = window.location.origin;
@@ -70,7 +68,13 @@
             document.getElementById('id-claims').style.display = "none";
             document.getElementById('message-wrapper').style.display = "block";
 
-            var queryStrings = "?title=" + document.getElementById('idTitle').value + "&preferedLanguage=" + document.getElementById('idLanguage').value;
+            var queryStrings = "";
+            var sep = "?";
+            var selfAssertedClaims = document.getElementsByClassName("selfAsserted");
+            for( var idx = 0; idx < selfAssertedClaims.length; idx++ ) {
+                queryStrings += sep + selfAssertedClaims[idx].id + "=" + selfAssertedClaims[idx].value;
+                sep = "&";
+            }
 
             fetch(apiEndpoint + '/api/issue-request' + queryStrings)
                 .then(response => response.text())

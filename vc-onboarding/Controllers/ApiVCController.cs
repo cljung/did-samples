@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Identity.Client;
 using System.Security.Claims;
+using System.Collections.Generic;
 
 namespace vc_onboarding.Controllers
 {
@@ -229,8 +230,8 @@ namespace vc_onboarding.Controllers
                 JObject manifest = GetIssuanceManifest();
                 string correlationId = Guid.NewGuid().ToString();
 
-                string title = this.Request.Query["title"].ToString();
-                string preferedLanguage = this.Request.Query["preferedLanguage"].ToString();
+                //string title = this.Request.Query["title"].ToString();
+                //string preferedLanguage = this.Request.Query["preferedLanguage"].ToString();
 
                 string userObjectId = User.Claims.Where(c => c.Type == "http://schemas.microsoft.com/identity/claims/objectidentifier").Select(c => c.Value).SingleOrDefault();
                 if ( userObjectId == null ) {
@@ -264,14 +265,31 @@ namespace vc_onboarding.Controllers
                                 objectId = userObjectId,
                                 tid = this.AppSettings.TenantId,
                                 lastName = surname,
-                                firstName = givenname,
-                                title = title,
-                                language = preferedLanguage
+                                firstName = givenname
                             }
                         }
                 };
 
                 string jsonString = JsonConvert.SerializeObject(issuanceRequest);
+                if (!string.IsNullOrEmpty(this.AppSettings.ExternalClaims)) {
+                    JObject json = JObject.Parse(jsonString);
+                    JObject claims = (JObject)json["issuance"]["claims"];
+                    JObject externalClaims = JObject.Parse( (string)_cache.Get("ExternalClaims_" + userObjectId) );
+                    foreach (var name in this.AppSettings.ExternalClaims.Split(",")) {
+                        claims.Property("firstName").AddAfterSelf(new JProperty( name, externalClaims[ name ].ToString()));
+                    }
+                    jsonString = JsonConvert.SerializeObject(json);
+                }
+                if (!string.IsNullOrEmpty(this.AppSettings.SelfAssertedClaims)) {
+                    JObject json = JObject.Parse(jsonString);
+                    JObject claims = (JObject)json["issuance"]["claims"];
+                    foreach (var name in this.AppSettings.SelfAssertedClaims.Split(",")) {
+                        string[] parts = name.Split(":"); // format  name:placeholder
+                        claims.Property("firstName").AddAfterSelf(new JProperty(parts[0], this.Request.Query[parts[0]].ToString()));
+                    }
+                    jsonString = JsonConvert.SerializeObject(json);
+                }
+
                 _log.LogTrace("VC Client API Request\n{0}", jsonString);
                 string contents = "";
                 HttpStatusCode statusCode = HttpStatusCode.OK;

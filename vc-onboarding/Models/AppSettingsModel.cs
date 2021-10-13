@@ -20,6 +20,8 @@ namespace vc_onboarding.Models
         public string Authority { get; set; }
         public string DidManifest { get; set; }
         public string ApiHostName { get; set; }
-
+        public string ExternalEndpoint { get; set; }
+        public string ExternalClaims { get; set; }
+        public string SelfAssertedClaims { get; set; }
     }
 }

@@ -8,6 +8,11 @@ using Microsoft.Extensions.Logging;
 using vc_onboarding.Models;
 using System.Security.Claims;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using System.Net.Http;
+using System.Text;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace vc_onboarding.Controllers
 {
@@ -15,11 +20,30 @@ namespace vc_onboarding.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         protected readonly AppSettingsModel AppSettings;
+        protected IMemoryCache _cache;
 
-        public HomeController(ILogger<HomeController> logger, IOptions<AppSettingsModel> appSettings)
+        public HomeController(ILogger<HomeController> logger, IMemoryCache memoryCache, IOptions<AppSettingsModel> appSettings)
         {
             _logger = logger;
             this.AppSettings = appSettings.Value;
+            _cache = memoryCache;
+        }
+
+        protected bool CallExternalSystem(string objectId, out string response) {
+            var payload = new {
+                op = "get",
+                objectId = objectId
+            };
+            string body = JsonConvert.SerializeObject(payload);
+            response = null;
+
+            _logger.LogInformation("calling {0}, body: {1}", this.AppSettings.ExternalEndpoint, body);
+            HttpClient client = new HttpClient();
+            HttpResponseMessage res = client.PostAsync(this.AppSettings.ExternalEndpoint, new StringContent(body, Encoding.UTF8, "application/json")).Result;
+            response = res.Content.ReadAsStringAsync().Result;
+            client.Dispose();
+            _logger.LogInformation("StatusCode: {0}, response: {1}", res.StatusCode.ToString(), response);
+            return res.IsSuccessStatusCode;
         }
 
         public IActionResult Index()
@@ -57,7 +81,28 @@ namespace vc_onboarding.Controllers
             vcClaims.Add( "lastName", surname);
             vcClaims.Add( "firstName", givenname);
 
+            // call external system to fetch extra claims
+            if (   !string.IsNullOrEmpty(this.AppSettings.ExternalEndpoint)
+                && !string.IsNullOrEmpty(this.AppSettings.ExternalClaims)
+                && CallExternalSystem(userObjectId, out string response)) {
+                _cache.Set( "ExternalClaims_" + userObjectId, response);
+                string[] claimNames = this.AppSettings.ExternalClaims.Split(",");
+                JObject externalClaims = JObject.Parse(response);
+                foreach( var claimName in claimNames) {
+                    vcClaims.Add( claimName, externalClaims[claimName].ToString());
+                }
+            }
             ViewData["vcClaims"] = vcClaims;
+
+            // add self asserted claims if we have any
+            IDictionary<string, string> vcClaimsSelfAsserted = new Dictionary<string, string>();
+            if ( !string.IsNullOrEmpty(this.AppSettings.SelfAssertedClaims) ) {
+                foreach (var name in this.AppSettings.SelfAssertedClaims.Split(",") ) {
+                    string[] parts = name.Split(":"); // format  name:placeholder
+                    vcClaimsSelfAsserted.Add(parts[0], parts[parts.Length - 1]);
+                }
+            }
+            ViewData["vcClaimsSelfAsserted"] = vcClaimsSelfAsserted;
 
             return View();
         }

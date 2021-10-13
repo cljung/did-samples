@@ -37,7 +37,10 @@ The other section controls Verifiable Credential settings. You need to update `T
     "CookieExpiresInSeconds": 7200,
     "CacheExpiresInSeconds": 300,
     "client_name": "VC MSAL B2C Onboarding",
-    "DidManifest": "<YOUR-DID-MANIFEST-URL>"
+    "DidManifest": "<YOUR-DID-MANIFEST-URL>",
+    "ExternalEndpoint": "https://your-name.azurewebsites.net/api/EduUserProfile?code=......",
+    "ExternalClaims": "ProgramName,CourseName,Grade,Result",
+    "SelfAssertedClaims": "title:Select your prefered title,preferedLanguage:en-us"
   }
 
 ```
@@ -73,3 +76,56 @@ When you do the App Registration, you need to go into `Token configuration` to a
     "CallbackPath": "/signin-oidc"
   },
 ```
+
+### Addign a mock External system for additional claims
+
+If you do nothing, the claims in the VC will be from your Identity Providers id_token and two self asserted claims (title + prefered language). 
+But If you want to add some more claims that simulates coming from an external system, you can configure a REST API endpoint that gets called and fetches some more claims.
+There is a mock up endpoint in the [ExternalSystem](ExternalSystem) folder that contains code for an Azure Function that stores some mock up data for an Educational scenario.
+
+### Deploy the Azure Function
+
+First, you need to create an Azure Function of type HttpTrigger in portal.azure.com. This will auto-create the `run.csx` and `function.json` for you. 
+In the code editor in portal.azure.com, make sure you select each file and copy-n-paste over the contents of each file from this github repo. 
+But, there is also another step you must perform - create the file `function.proj`. This file is needed as it references the needed dotnet Assemblies for working with Azure Table Storage.
+The easies way to create this file is to click on the `Console` menu item in portal.azure.com for the Azure Function, then `cd` into your folder in the web based command prompt
+and finally issue the command `copy function.json function.proj`. This will create a file that we then can edit in the Azure Function code editor. 
+Open the file and copy-n-paste over the contents of the file from the same file in this github repo. Finally, open `run.csx`, make some unimportant change and press `Save` to see that there are no errors.
+
+The Azure Function uses Azure Table Storage to hold the extra claims per user. You need to create an Azure Storage account and add the connect string in the configuration for it.
+
+```json
+  {
+    "name": "EDU_STORAGE_CONNECTSTRING",
+    "value": "DefaultEndpointsProtocol=https;AccountName=apacstg01;AccountKey=...;EndpointSuffix=core.windows.net",
+    "slotSetting": false
+  },
+```
+### Add som sample data
+
+You can import some test data for a user by invoking the Azure Function from a powershell command prompt, like below.
+
+```Powershell
+$url = "https://your-name.azurewebsites.net/api/EduUserProfile?code=..."
+$body = @"
+{
+"op": "save",
+"objectId": "...user's objectId in your IDP...'",
+"ProgramName": "Computer Science",
+"CourseName": "CS101",
+"Grade": "A",
+"Result": "Pass"
+}
+"@
+Invoke-RestMethod -Uri $url -Method "POST" -ContentType "application/json" -Body $body
+```
+
+In order to test that it works, you can retrieve it with this payload body
+
+```Powershell
+$body = @"
+{
+"op": "get",
+"objectId": "...user's objectId in your IDP...'"
+}
+"@```
