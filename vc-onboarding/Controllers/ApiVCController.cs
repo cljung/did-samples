@@ -323,8 +323,8 @@ namespace vc_onboarding.Controllers
                 if (code == "issuance_succesful") {
                     CacheJsonObjectWithExpiery(correlationId, new { status = 2, message = "Issuance process is completed." });
                 }
-                if (code == "issuance_failed") {
-                    CacheJsonObjectWithExpiery(correlationId, new { status = 99, message = "Issuance process failed with reason: " + issuanceResponse["details"].ToString() });
+                if (code == "issuance_error") {
+                    CacheJsonObjectWithExpiery(correlationId, new { status = 99, message = "Issuance process failed with reason: " + issuanceResponse["error"]["message"].ToString() });
                 }
                 return new OkResult();
             } catch (Exception ex) {
@@ -357,7 +357,7 @@ namespace vc_onboarding.Controllers
                 }
                 string body = null;
                 if (GetCachedValue(correlationId, out body)) {
-                    RemoveCacheValue(correlationId);
+                    //RemoveCacheValue(correlationId);
                     return ReturnJson(body);
                 }
                 return new OkResult();
@@ -390,9 +390,9 @@ namespace vc_onboarding.Controllers
                         requestedCredentials = new[] {
                             new {
                                     type = manifest["id"],
-                                    manifest = this.AppSettings.DidManifest,
+                                    //manifest = this.AppSettings.DidManifest,
                                     purpose = "To test your VC",
-                                    trustedIssuers = new [] { manifest["input"]["issuer"] }
+                                    acceptedIssuers = new [] { manifest["input"]["issuer"] }
                                 }
                         }
                     }

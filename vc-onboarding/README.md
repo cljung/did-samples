@@ -79,7 +79,7 @@ When you do the App Registration, you need to go into `Token configuration` to a
   },
 ```
 
-### Addign a mock External system for additional claims
+### Adding a mock External system for additional claims
 
 If you do nothing, the claims in the VC will be from your Identity Providers id_token and two self asserted claims (title + prefered language). 
 But If you want to add some more claims that simulates coming from an external system, you can configure a REST API endpoint that gets called and fetches some more claims.
