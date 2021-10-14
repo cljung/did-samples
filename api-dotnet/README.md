@@ -41,7 +41,7 @@ The remaining five settings control what VC credential you want to issue and pre
 - **VerifierAuthority** - This DID identifier is used as value for the `authority` for the presentation request (verify VC) sent to the VC Client API. It will be your DID you can find in your VC blade in portal.azure.com.
 - **IssuerAuthority** - The issuer DID identifier is used in two ways: 
   - For issuing VCs, it is used for the `authority`for the issuance request sent to the VC Client API. Since you don't issue someone elses credentials, it is your did from the VC Credential you created in portal.azure.com
-  - For preenting/verifying VCs, it is used for the `trustedIssuers` attribute to indicate what issuers you trust.
+  - For preenting/verifying VCs, it is used for the `acceptedIssuers` attribute to indicate what issuers you trust.
 - **CredentialType** - For both issuance and presentation, the value is used to set the `type` attribute indicating the type name of the credential you want to issue or verify.
 - **DidManifest**- The complete url to the DID manifest. It is used to set the attribute `manifest` and it is used for both issuance and presentation.
 - **IssuancePinCodeLength** - If you want your issuance process to use the pin code method, you specify how many digits the pin code should have. A value of zero will not use the pin code method.

@@ -95,45 +95,43 @@
                                                 document.getElementById('pinCodeText').style.display = "block";
                                             }
                                             document.getElementById('selfAssertedClaims').style.display = "none";
+
+                                            var checkStatus = setInterval(function () {
+                                                fetch('api/issuer/issue-response?id=' + respIssuanceReq.id)
+                                                    .then(response => response.text())
+                                                    .catch(error => document.getElementById("message").innerHTML = error)
+                                                    .then(response => {
+                                                        if (response.length > 0) {
+                                                            console.log(response)
+                                                            respMsg = JSON.parse(response);
+                                                            document.getElementById('message-wrapper').style.display = "block";
+                                                            document.getElementById('qrText').style.display = "none";
+                                                            document.getElementById('qrcodeFrame').style.display = "none";
+                                                            document.getElementById('qrcode').style.display = "none";
+                                                            document.getElementById('sign-in').textContent = 'Verify Again';
+                                                            // respMsg.status == 1 -> QR Code scanned
+                                                            if (respMsg.status == 1) {
+                                                                document.getElementById('message').innerHTML = respMsg.message;
+                                                                //clearInterval(checkStatus);
+                                                            }
+                                                            // respMsg.status == 2 -> VC issued
+                                                            if (respMsg.status == 2) {
+                                                                document.getElementById('message').innerHTML = respMsg.message;
+                                                                clearInterval(checkStatus);
+                                                            }
+                                                            // respMsg.status == 99 -> VC issueance failed
+                                                            if (respMsg.status == 99) {
+                                                                document.getElementById('message').innerHTML = respMsg.message;
+                                                                document.getElementById('message').style.textColor = "red";
+                                                                clearInterval(checkStatus);
+                                                            }
+                                                        }
+                                                    })
+                                            }, 3000);
+
                                         }
                                     }
                                 })
-
-                            if (respIssuanceReq != null) {
-                                var checkStatus = setInterval(function () {
-                                    fetch('api/issuer/issue-response?id=' + respIssuanceReq.id)
-                                        .then(response => response.text())
-                                        .catch(error => document.getElementById("message").innerHTML = error)
-                                        .then(response => {
-                                            if (response.length > 0) {
-                                                console.log(response)
-                                                respMsg = JSON.parse(response);
-                                                document.getElementById('message-wrapper').style.display = "block";
-                                                document.getElementById('qrText').style.display = "none";
-                                                document.getElementById('qrcodeFrame').style.display = "none";
-                                                document.getElementById('qrcode').style.display = "none";
-                                                document.getElementById('sign-in').textContent = 'Verify Again';
-                                                // respMsg.status == 1 -> QR Code scanned
-                                                if (respMsg.status == 1) {
-                                                    document.getElementById('message').innerHTML = respMsg.message;
-                                                    clearInterval(checkStatus);
-                                                }
-                                                // respMsg.status == 2 -> VC issued
-                                                if (respMsg.status == 2) {
-                                                    document.getElementById('message').innerHTML = respMsg.message;
-                                                    clearInterval(checkStatus);
-                                                }
-                                                // respMsg.status == 99 -> VC issueance failed
-                                                if (respMsg.status == 99) {
-                                                    document.getElementById('message').innerHTML = respMsg.message;
-                                                    document.getElementById('message').style.textColor = "red";
-                                                    clearInterval(checkStatus);
-                                                }
-                                            }
-                                        })
-                                }, 3000);
-                            }
-
                         })
 
                         var selfAssertedClaims;

@@ -121,7 +121,7 @@ namespace client_api_test_service_dotnet
                     type = this.AppSettings.CredentialType,
                     manifest = this.AppSettings.DidManifest,
                     purpose = this.AppSettings.Purpose,
-                    trustedIssuers = new List<string>(new string[] { this.AppSettings.IssuerAuthority })
+                    acceptedIssuers = new List<string>(new string[] { this.AppSettings.IssuerAuthority })
                 });
 
                 string jsonString = JsonConvert.SerializeObject(request, Formatting.None, new JsonSerializerSettings {

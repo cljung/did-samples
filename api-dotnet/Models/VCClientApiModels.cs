@@ -88,7 +88,7 @@ namespace client_api_test_service_dotnet.Models
         public string type { get; set; }
         public string manifest { get; set; }
         public string purpose { get; set; }
-        public List<string> trustedIssuers { get; set; }
+        public List<string> acceptedIssuers { get; set; }
     }
 
     /// <summary>

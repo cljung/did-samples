@@ -109,7 +109,7 @@
                                             // respMsg.status == request_retrieved -> QR Code scanned
                                             if (respMsg.status == "request_retrieved") {
                                                 document.getElementById('message').innerHTML = respMsg.message;
-                                                clearInterval(checkStatus);
+                                                //clearInterval(checkStatus);
                                             }
                                             // respMsg.status == issuance_successful -> VC issued
                                             if (respMsg.status == "issuance_successful") {

@@ -12,7 +12,7 @@
         }
     },
     "issuance": {
-        "type": "",
+        "type": "RedBaronsFlyingCircus",
         "manifest": "https://beta.did.msidentity.com/v1.0/4254d724-92a0-4be6-9fbf-feea786ed3b6/verifiableCredential/contracts/RedBaronsFlyingCircus",
         "pin": {
             "value": "9999",

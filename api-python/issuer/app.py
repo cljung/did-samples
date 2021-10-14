@@ -106,7 +106,7 @@ def presentationRequest():
         payload["issuance"]["pin"]["value"] = pinCode
     if "claims" in payload["issuance"] is not None:
         for claim in issuanceConfig["issuance"]["claims"]:
-            payload["issuance"]["claims"][claim] = id = request.args.get(claim)
+            payload["issuance"]["claims"][claim] = request.args.get(claim)
     print( json.dumps(payload) )
     post_headers = { "content-type": "application/json", "Authorization": "Bearer " + accessToken }
     client_api_request_endpoint = "https://beta.did.msidentity.com/v1.0/" + config["azTenantId"] + "/verifiablecredentials/request"
@@ -130,6 +130,20 @@ def issuanceRequestApiCallback():
         }
         cache.set( issuanceResponse["state"], json.dumps(cacheData) )
         return ""
+    if issuanceResponse["code"] == "issuance_successful":
+        cacheData = {
+            "status": 2,
+            "message": "Issuance process completed"
+        }
+        cache.set( issuanceResponse["state"], json.dumps(cacheData) )
+        return ""
+    if issuanceResponse["code"] == "issuance_error":
+        cacheData = {
+            "status": 99,
+            "message": "Issuance process failed"
+        }
+        cache.set( issuanceResponse["state"], json.dumps(cacheData) )
+        return ""
     return ""
 
 @app.route("/issue-response-status", methods = ['GET'])
@@ -149,4 +163,4 @@ def issuanceRequestStatus():
         return ""
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8081)
+    app.run(host="0.0.0.0", port=8080)

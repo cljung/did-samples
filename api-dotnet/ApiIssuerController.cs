@@ -189,13 +189,14 @@ namespace client_api_test_service_dotnet
                     if (callback.code == "request_retrieved") {
                         return ReturnJson(JsonConvert.SerializeObject(new { status = 1, message = "QR Code is scanned. Waiting for issuance to complete." }));
                     }
-                    if (callback.code == "issuance_succesful") {
+                    if (callback.code == "issuance_successful") {
+                        RemoveCacheValue(correlationId);
                         return ReturnJson(JsonConvert.SerializeObject(new { status = 2, message = "Issuance process is completed" }));
                     }
                     if (callback.code == "issuance_failed") {
+                        RemoveCacheValue(correlationId);
                         return ReturnJson(JsonConvert.SerializeObject(new { status = 99, message = "Issuance process failed with reason: " + callback.error.message }));
                     }
-                    RemoveCacheValue(correlationId);
                 }
                 return new OkResult();
             } catch (Exception ex) {

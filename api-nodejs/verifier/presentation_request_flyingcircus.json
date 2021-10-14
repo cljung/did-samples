@@ -15,10 +15,10 @@
       "includeReceipt": true,
       "requestedCredentials": [
         {
-          "type": "",
+          "type": "RedBaronsFlyingCircus",
           "manifest": "https://beta.did.msidentity.com/v1.0/4254d724-92a0-4be6-9fbf-feea786ed3b6/verifiableCredential/contracts/RedBaronsFlyingCircus",
           "purpose": "the purpose why the verifier asks for a VC",
-          "trustedIssuers": [ "did-of-the-Issuer-trusted" ]
+          "acceptedIssuers": [ "did-of-the-Issuer-trusted" ]
         }
       ]
     }

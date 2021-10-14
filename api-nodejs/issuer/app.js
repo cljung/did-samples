@@ -224,6 +224,30 @@ app.post('/issue-request-api-callback', parser, async (req, res) => {
         });
       })      
     }
+    if ( issuanceResponse.code == "issuance_successful" ) {
+      sessionStore.get(issuanceResponse.state, (error, session) => {
+        var sessionData = {
+          "status" : 2,
+          "message": "Issuance process completed"
+        };
+        session.sessionData = sessionData;
+        sessionStore.set( issuanceResponse.state, session, (error) => {
+          res.send();
+        });
+      })      
+    }
+    if ( issuanceResponse.code == "issuance_error" ) {
+      sessionStore.get(issuanceResponse.state, (error, session) => {
+        var sessionData = {
+          "status" : 99,
+          "message": "Issuance process failed"
+        };
+        session.sessionData = sessionData;
+        sessionStore.set( issuanceResponse.state, session, (error) => {
+          res.send();
+        });
+      })      
+    }
     res.send()
   });  
   res.send()

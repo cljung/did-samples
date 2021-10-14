@@ -15,10 +15,10 @@
     "includeReceipt": true,
     "requestedCredentials": [
       {
-        "type": "",
+        "type": "VerifiedCredentialExpert",
         "manifest": "https://beta.did.msidentity.com/v1.0/3c32ed40-8a10-465b-8ba4-0b1e86882668/verifiableCredential/contracts/VerifiedCredentialExpert",
         "purpose": "the purpose why the verifier asks for a VC",
-        "trustedIssuers": [ "did-of-the-Issuer-trusted" ]
+        "acceptedIssuers": [ "did-of-the-Issuer-trusted" ]
       }
     ]
   }

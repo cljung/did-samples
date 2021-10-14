@@ -113,11 +113,11 @@
                                     document.getElementById('qrcode').style.display = "none";
                                     document.getElementById('sign-in').textContent = 'Verify Again';
                                     document.getElementById('message').innerHTML = respMsg.message;
-                                    clearInterval(checkStatus);
+                                    //clearInterval(checkStatus);
                                 }
                                 // respMsg.status == 2 -> VC presented and validated
                                 if (respMsg.status == 2) {
-                                    document.getElementById('message').innerHTML = respMsg.message + " validated successfully as " + cardTitle;
+                                    document.getElementById('message').innerHTML = respMsg.message;
                                     clearInterval(checkStatus);
                                 }
                             }

@@ -108,7 +108,7 @@ app.get("/echo",
             'Host': req.hostname,
             'x-forwarded-for': req.headers['x-forwarded-for'],
             'x-original-host': req.headers['x-original-host'],
-            'issuerDid': presentationRequestConfig.presentation.requestedCredentials[0].trustedIssuers[0],
+            'issuerDid': presentationRequestConfig.presentation.requestedCredentials[0].acceptedIssuers[0],
             'credentialType': presentationRequestConfig.presentation.requestedCredentials[0].type,
             'client_purpose': presentationRequestConfig.presentation.requestedCredentials[0].client_purpose,
             'displayCard': didContract.display.card,
@@ -323,7 +323,7 @@ async function getDidContract( ) {
   if ( presentationRequestConfig.presentation.requestedCredentials[0].type.length == 0 ) {
     presentationRequestConfig.presentation.requestedCredentials[0].type = didContract.id;
   }
-  presentationRequestConfig.presentation.requestedCredentials[0].trustedIssuers[0] = didContract.input.issuer;
+  presentationRequestConfig.presentation.requestedCredentials[0].acceptedIssuers[0] = didContract.input.issuer;
   console.log(presentationRequestConfig.authority);
   if ( !(presentationRequestConfig.authority.startsWith("did:ion:")) ) {
     console.log("authority <-- manifest");

@@ -52,7 +52,7 @@ print( manifest )
 presentationConfig["registration"]["clientName"] = "Python Client API Verifier"
 if not str(presentationConfig["authority"]).startswith("did:ion:"):
     presentationConfig["authority"] = manifest["input"]["issuer"]
-presentationConfig["presentation"]["requestedCredentials"][0]["trustedIssuers"][0] = manifest["input"]["issuer"]
+presentationConfig["presentation"]["requestedCredentials"][0]["acceptedIssuers"][0] = manifest["input"]["issuer"]
 if str(presentationConfig["presentation"]["requestedCredentials"][0]["type"]) == "":
     presentationConfig["presentation"]["requestedCredentials"][0]["type"] = manifest["id"]
 
@@ -73,7 +73,7 @@ def echoApi():
         'Host': request.headers.get('host'),
         'x-forwarded-for': request.headers.get('x-forwarded-for'),
         'x-original-host': request.headers.get('x-original-host'),
-        'issuerDid':  presentationConfig["presentation"]["requestedCredentials"][0]["trustedIssuers"][0],
+        'issuerDid':  presentationConfig["presentation"]["requestedCredentials"][0]["acceptedIssuers"][0],
         'credentialType': presentationConfig["presentation"]["requestedCredentials"][0]["type"],
         'client_purpose': presentationConfig["presentation"]["requestedCredentials"][0]["purpose"],
         'displayCard': manifest["display"]["card"],
@@ -207,4 +207,4 @@ def presentationResponseB2C():
     return Response( json.dumps(errmsg), status=409, mimetype='application/json')
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8082)
+    app.run(host="0.0.0.0", port=8080)

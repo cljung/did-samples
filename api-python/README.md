@@ -26,7 +26,7 @@ python app.py ./issuance_request_config_v2.json
 Then, open a separate command prompt and run the following command
 
 ```Powershell
-ngrok http 8081
+ngrok http 8080
 ```
 
 ### Running the verifier
@@ -41,7 +41,7 @@ python app.py ./presentation_request_config_v2.json
 Then, open a separate command prompt and run the following command
 
 ```Powershell
-ngrok http 8082
+ngrok http 8080
 ```
 
 Grab, the url in the ngrok output (like `https://96a139d4199c.ngrok.io`) and Browse to it.
