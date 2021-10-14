@@ -320,7 +320,7 @@ namespace vc_onboarding.Controllers
                 if (code == "request_retrieved") {
                     CacheJsonObjectWithExpiery(correlationId, new { status = 1, message = "QR Code is scanned. Waiting for issuance to complete." });
                 }
-                if (code == "issuance_succesful") {
+                if (code == "issuance_successful") {
                     CacheJsonObjectWithExpiery(correlationId, new { status = 2, message = "Issuance process is completed." });
                 }
                 if (code == "issuance_error") {

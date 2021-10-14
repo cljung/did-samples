@@ -108,7 +108,7 @@
                             // respMsg.status == 1 -> QR Code scanned
                             if (respMsg.status == 1) {
                                 document.getElementById('message').innerHTML = respMsg.message;
-                                clearInterval(checkStatus);
+                                //clearInterval(checkStatus);
                             }
                             // respMsg.status == 2 -> VC issued
                             if (respMsg.status == 2) {
