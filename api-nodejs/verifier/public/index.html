@@ -68,40 +68,38 @@
                                 }
                             })
 
-                            if ( respPresReq ) {
-                                var checkStatus = setInterval(function () {
-                                    fetch('presentation-response-status?id=' + respPresReq.id)
-                                        .then(response => response.text())
-                                        .catch(error => document.getElementById("message").innerHTML = error)
-                                        .then(response => {
-                                            if (response.length > 0) {
-                                                console.log(response)
-                                                var respMsg = JSON.parse(response);
-                                                // respMsg.status == 1 -> QR Code scanned
-                                                if (respMsg.status == 1) {
-                                                    document.getElementById('message-wrapper').style.display = "block";
-                                                    document.getElementById('qrText').style.display = "none";
-                                                    document.getElementById('qrcodeFrame').style.display = "none";
-                                                    document.getElementById('qrcode').style.display = "none";
-                                                    document.getElementById('sign-in').textContent = 'Verify Again';
-                                                    document.getElementById('message').innerHTML = respMsg.message;
-                                                }
-                                                // respMsg.status == 2 -> VC presented and validated
-                                                if (respMsg.status == 2) {
-                                                    var displayName = "(unknown)";
-                                                    if ( respMsg.claims.displayName ) {
-                                                        displayName = respMsg.claims.displayName;
-                                                    }
-                                                    if ( respMsg.claims.firstName ) {
-                                                        displayName = `${respMsg.claims.firstName} ${respMsg.claims.lastName}`;
-                                                    }
-                                                    document.getElementById('message').innerHTML = displayName + " validated successfully";
-                                                    clearInterval(checkStatus);
-                                                }
+                            var checkStatus = setInterval(function () {
+                                fetch('presentation-response-status?id=' + respPresReq.id)
+                                    .then(response => response.text())
+                                    .catch(error => document.getElementById("message").innerHTML = error)
+                                    .then(response => {
+                                        if (response.length > 0) {
+                                            console.log(response)
+                                            var respMsg = JSON.parse(response);
+                                            // respMsg.status == 1 -> QR Code scanned
+                                            if (respMsg.status == 1) {
+                                                document.getElementById('message-wrapper').style.display = "block";
+                                                document.getElementById('qrText').style.display = "none";
+                                                document.getElementById('qrcodeFrame').style.display = "none";
+                                                document.getElementById('qrcode').style.display = "none";
+                                                document.getElementById('sign-in').textContent = 'Verify Again';
+                                                document.getElementById('message').innerHTML = respMsg.message;
                                             }
-                                        })
-                                }, 3000);
-                            }            
+                                            // respMsg.status == 2 -> VC presented and validated
+                                            if (respMsg.status == 2) {
+                                                var displayName = "(unknown)";
+                                                if ( respMsg.claims.displayName ) {
+                                                    displayName = respMsg.claims.displayName;
+                                                }
+                                                if ( respMsg.claims.firstName ) {
+                                                    displayName = `${respMsg.claims.firstName} ${respMsg.claims.lastName}`;
+                                                }
+                                                document.getElementById('message').innerHTML = displayName + " validated successfully";
+                                                clearInterval(checkStatus);
+                                            }
+                                        }
+                                    })
+                            }, 3000);
                         })
         
                         fetch('echo')
