@@ -13,21 +13,18 @@
         <div id="message"></div>
         <div id="did-wrapper" style="display:none">
             <div id="id-claims">
-                <table class="table-hover table-condensed table-striped" style="margin:0 auto">
-                    <tr>
+                <table id="tableClaims" class="table-hover table-condensed table-striped" style="margin:0 auto">
+                    <thead style="background-color:darkgray">
                         <th>Claim</th>
                         <th>Value</th>
-                    </tr>
-                    @foreach (var claim in (Dictionary<string,string>)ViewData["vcClaims"]) {
-                    <tr>
-                        <td>@claim.Key</td>
-                        <td id="id-claim-@claim.Key"></td>
-                    </tr>
-                    }
-                    <tr>
+                    </thead>
+                    <tbody>
+                        
+                    </tbody>
+                    <tfoot style="background-color:darkgray">
                         <td>DID</td>
                         <td><a id="idIon" href="https://identity.foundation/ion/explorer/?did=" target="_blank">View DID with identity.foundation/explorer</a></td>
-                    </tr>
+                    </tfoot>
                 </table>
             </div>
             
@@ -102,9 +99,14 @@
                                 clearInterval(checkStatus);
                                 document.getElementById('did-wrapper').style.display = "block";
                                 document.getElementById('idIon').href = "https://identity.foundation/ion/explorer/?did=" + respMsg.did;
-                                var idx = 0;
-                                for (idx = 0; idx < Object.keys(respMsg.claims).length; idx++) {
-                                    document.getElementById('id-claim-' + Object.keys(respMsg.claims)[idx]).innerHTML = respMsg.claims[Object.keys(respMsg.claims)[idx]];
+                                var tbodyRef = document.getElementById('tableClaims').getElementsByTagName('tbody')[0]
+                                //var idx = 0;
+                                for (var idx = 0; idx < Object.keys(respMsg.claims).length; idx++) {
+                                    var claimName = Object.keys(respMsg.claims)[idx];
+                                    var claimValue = respMsg.claims[Object.keys(respMsg.claims)[idx]];
+                                    var tRow = tbodyRef.insertRow();
+                                    tRow.insertCell().appendChild( document.createTextNode( claimName ) );
+                                    tRow.insertCell().appendChild( document.createTextNode( claimValue ) );
                                 }
                             }
                         }

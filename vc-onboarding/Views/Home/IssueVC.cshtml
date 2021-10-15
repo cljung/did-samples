@@ -12,10 +12,10 @@
     <div id="id-claims">
         <p>You will be issued a Verifiable Credential containing these claims. Some are preset, some you can edit yourself.</p>
         <table class="table-hover table-condensed table-striped" style="margin:0 auto">
-            <tr>
+            <thead style="background-color:darkgray">
                 <th>Claim</th>
                 <th>Value</th>
-            </tr>
+            </thead>
             @foreach (var claim in (Dictionary<string, string>)ViewData["vcClaims"]) {
                 <tr>
                     <td>@claim.Key</td>
@@ -28,10 +28,10 @@
                     <td><input id="@claim.Key" type="text" placeholder="@claim.Value" class="selfAsserted" /></td>
                 </tr>
             }
-            <tr>
+            <tfoot style="background-color:darkgray">
                 <td>DID</td>
                 <td><a id="idIon" href="https://identity.foundation/ion/explorer/?did=" target="_blank">View DID with identity.foundation/explorer</a></td>
-            </tr>
+            </tfoot>
         </table>
     </div>
 
