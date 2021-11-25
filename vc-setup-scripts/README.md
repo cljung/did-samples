@@ -20,29 +20,30 @@ You need the [Azure Az](https://docs.microsoft.com/en-us/powershell/azure/new-az
 You should make sure that you can connect to your subscription via running
 
 ```powershell
-Connect-AzAccount -SubscriptionId <your-subscription-guid>
+Connect-AzAccount -SubscriptionId <your-subscription-guid> -TenantId <your Azure AD tenant id>
 ```
 
 Then run the below command after replacing the respective parameters with the names of your choice.
 
 ```powershell
-.\DID-deploy-issuer.ps1 -ResourceGroupName "did-rg" -Location "West Europe" `
-         -KeyVaultName "did-kv" -StorageAccountName "didstg" `
-         -IssuerAppName "VC Issuer Sample" -VCType "ContosoEmployee" -GenerateConfigFiles
+.\DID-deploy-issuer.ps1 -ResourceGroupName "aadvc-rg" -Location "West Europe" `
+         -KeyVaultName "aadvc-kv" -StorageAccountName "myaadvcstg" `
+         -VCCredentialsApp "vc-cred-app"
 ```
 
 **PLEASE NOTE** you need to change `KeyVaultName` and the `StorageAccountName` to be globally unique.
 
-The script will:
-- Register an app in Azure AD for your VC Issuer sample (the -IssuerAppName parameter). 
+### The script will:
+- Create the Service Princpal for the Verifiable Credential Request Service API
+- Register an app in Azure AD for your VC Credentials to get an access_token to authenticate to Verifiable Credential Request Service API (the -VCCredentialsApp parameter). 
 - Create the Resource Group, if it not already exists
 - Deploy the ARM template which will create:
     - An Azure Key Vault instance and create Access Policies for you as an admin and for the `Verifiable Credentials Issuer Service` app
     - An Azure Storage Account with one private container and one public. The private will later store your Rules & Display file while the public will host your VC card's logo image.
-- Assign the permission `Storage Blob Data Reader` to the `Verifiable Credentials Issuer Service` service principal for the storage account so that it can read the Rules & Display files.
-- Generate template json files:
-    - Rules file - A file that binds your VC Issuar Sample app to your Azure AD tenant. The generated Rules file contains some extra claims to illustrate how that can be done
-    - Display file - The visual design of your VC card that controls how it is displayed in the Microsoft Authenticator app.
+- Assign the permission `Storage Blob Data Reader` to the `Verifiable Credentials Issuer Service` service principal for the storage account container so that it can read the Rules & Display files.
+
+### Manual steps after the script has completed
+You need to go portal.azure.com for the application that was created, see `-VCCredentialsApp "vc-cred-app"`, and add `API Permission` for the `Verifiable Crential Request Service` and the `VerifiableCredential.Create.All` permission. Remember to Save and Grant admin consent.  
 
 ## Register your organization for Verifiable Credentials and set your KeyVault
 

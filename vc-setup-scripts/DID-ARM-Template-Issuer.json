@@ -37,6 +37,12 @@
                 "description": "The Service Principle id of the Enterprise Application 'Verifiable Credentials Issuer Service'"
             }  
         },
+        "VerifiableCredentialsRequestServicePrincipalObjectId": {
+            "type": "string",
+            "metadata": {
+                "description": "The Service Principle id of the Enterprise Application 'Verifiable Credentials Request Service'"
+            }  
+        },        
         "IssuerAppServicePrincipalObjectId": {
             "type": "string",
             "metadata": {
@@ -151,6 +157,20 @@
                             ],
                             "certificates": []
                         }
+                    },
+                    {
+                        "tenantId": "[parameters('AADTenantId')]",
+                        "objectId": "[parameters('VerifiableCredentialsRequestServicePrincipalObjectId')]",
+                        "permissions": {
+                            "keys": [
+                                "Get",
+                                "Sign"
+                            ],
+                            "secrets": [
+                                "Get"
+                            ],
+                            "certificates": []
+                        }
                     }
                 ],
                 "enabledForDeployment": false,
@@ -226,20 +246,6 @@
                 "denyEncryptionScopeOverride": false,
                 "publicAccess": "None"
             }
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-            "apiVersion": "2020-08-01-preview",
-            "name": "[concat(parameters('StorageAccountName'), '/default/', variables('PublicStorageAccountContainerName'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('StorageAccountName'), 'default')]",
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName'))]"
-            ],
-            "properties": {
-                "defaultEncryptionScope": "$account-encryption-key",
-                "denyEncryptionScopeOverride": false,
-                "publicAccess": "Blob"
-            }
-        }        
+        }
     ]
 }
