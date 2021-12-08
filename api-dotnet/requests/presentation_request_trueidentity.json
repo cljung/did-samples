@@ -9,7 +9,7 @@
     "nounce": "...set at runtime...",
     "state": "...set at runtime...",
     "headers": {
-      "my-api-key": "blabla"
+      "api-key": "blabla"
     }
   },
   "presentation": {

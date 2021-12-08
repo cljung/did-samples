@@ -12,7 +12,11 @@
       }
     },
     "issuance": {
-      "type": "Cljungdemob2cMembership",
-      "manifest": "https://beta.did.msidentity.com/v1.0/9885457a-2026-4e2c-a47e-32ff52ea0b8d/verifiableCredential/contracts/Cljungdemob2cMembership"
+      "type": "FawltyTowers2CampusPass3",
+      "manifest": "https://beta.did.msidentity.com/v1.0/9885457a-2026-4e2c-a47e-32ff52ea0b8d/verifiableCredential/contracts/FawltyTowers2CampusPass3",
+      "claims": {
+        "displayName": "Ringo Starr",
+        "sponsorName": "John Lennon"
+      }
     }
   }

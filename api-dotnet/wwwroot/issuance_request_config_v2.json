@@ -9,7 +9,7 @@
     "nonce": "...",
     "state": "you pass your state here to correlate it when you get the callback",
     "headers": {
-      "my-api-key": "...set at runtime..."
+      "api-key": "...set at runtime..."
     }
   },
   "issuance": {

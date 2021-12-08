@@ -49,6 +49,9 @@ r = requests.get(url = str(issuanceConfig["issuance"]["manifest"]) )
 manifest = r.json()
 print( manifest )
 
+apiKey = str(uuid.uuid4())
+
+issuanceConfig["callback"]["headers"]["api-key"] = apiKey
 issuanceConfig["registration"]["clientName"] = "Python Client API Verifier"
 if not str(issuanceConfig["authority"]).startswith("did:ion:"):
     issuanceConfig["authority"] = manifest["input"]["issuer"]
@@ -123,6 +126,8 @@ def presentationRequest():
 def issuanceRequestApiCallback():
     issuanceResponse = request.json
     print(issuanceResponse)
+    if request.headers['api-key'] != apiKey:
+        return Response( jsonify({'error':'api-key wrong or missing'}), status=401, mimetype='application/json')
     if issuanceResponse["code"] == "request_retrieved":
         cacheData = {
             "status": 1,

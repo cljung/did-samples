@@ -254,8 +254,7 @@ namespace vc_onboarding.Controllers
                         callback = new {
                             url = string.Format("{0}/issuance-callback", GetApiPath() ),
                             state = correlationId,
-                            headers = new {
-                            }
+                            headers = new Dictionary<string, string>() { { "api-key", this.AppSettings.ApiKey } }
                         },
                         issuance = new {
                             type = manifest["id"],
@@ -314,6 +313,10 @@ namespace vc_onboarding.Controllers
                 _log.LogTrace("issuanceCallback");
                 string body = GetRequestBody();
                 _log.LogTrace(body);
+                this.Request.Headers.TryGetValue("api-key", out var apiKey);
+                if (this.AppSettings.ApiKey != apiKey) {
+                    return new ContentResult() { StatusCode = (int)HttpStatusCode.Unauthorized, Content = "api-key wrong or missing" };
+                }
                 JObject issuanceResponse = JObject.Parse(body);
                 string correlationId = issuanceResponse["state"].ToString();
                 string code = issuanceResponse["code"].ToString();
@@ -382,8 +385,7 @@ namespace vc_onboarding.Controllers
                     callback = new {
                         url = string.Format("{0}/presentation-callback", GetApiPath()),
                         state = correlationId,
-                        headers = new {
-                        }
+                        headers = new Dictionary<string, string>() { { "api-key", this.AppSettings.ApiKey } }
                     },
                     presentation = new {
                         includeReceipt = true,
@@ -423,6 +425,10 @@ namespace vc_onboarding.Controllers
             try {
                 string body = GetRequestBody();
                 _log.LogTrace(body);
+                this.Request.Headers.TryGetValue("api-key", out var apiKey);
+                if (this.AppSettings.ApiKey != apiKey) {
+                    return new ContentResult() { StatusCode = (int)HttpStatusCode.Unauthorized, Content = "api-key wrong or missing" };
+                }
                 JObject presentationResponse = JObject.Parse(body);
                 string correlationId = presentationResponse["state"].ToString();
                 string code = presentationResponse["code"].ToString();

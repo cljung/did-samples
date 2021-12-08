@@ -265,7 +265,7 @@ public class ApiVCController {
             ((ObjectNode)(rootNode.path("registration"))).put("clientName", clientName );
             ((ObjectNode)(rootNode.path("callback"))).put("url", callback );
             ((ObjectNode)(rootNode.path("callback"))).put("state", correlationId );
-            ((ObjectNode)(rootNode.path("callback").path("headers"))).put("my-api-key", apiKey );
+            ((ObjectNode)(rootNode.path("callback").path("headers"))).put("api-key", apiKey );
             if ( rootNode.path("issuance").has("pin") ) {
                 pinCodeLength = rootNode.path("issuance").path("pin").path("length").asInt();
                 if ( pinCodeLength <= 0) {
@@ -303,6 +303,9 @@ public class ApiVCController {
         lgr.info( body );
         ObjectMapper objectMapper = new ObjectMapper();
         try {
+            if ( request.getHeader("api-key") != apiKey ) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body( "api-key wrong or missing" );
+            }
             JsonNode presentationResponse = objectMapper.readTree( body );
             String code = presentationResponse.path("code").asText();
             ObjectNode data = null;
@@ -383,7 +386,7 @@ public class ApiVCController {
             ((ObjectNode)(rootNode.path("registration"))).put("clientName", clientName );
             ((ObjectNode)(rootNode.path("callback"))).put("url", callback );
             ((ObjectNode)(rootNode.path("callback"))).put("state", correlationId );
-            ((ObjectNode)(rootNode.path("callback").path("headers"))).put("my-api-key", apiKey );
+            ((ObjectNode)(rootNode.path("callback").path("headers"))).put("api-key", apiKey );
             payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootNode);
             responseBody = callVCClientAPI( payload );
             JsonNode apiResponse = objectMapper.readTree( responseBody );
@@ -409,6 +412,9 @@ public class ApiVCController {
         lgr.info( body );
         ObjectMapper objectMapper = new ObjectMapper();
         try {
+            if ( request.getHeader("api-key") != apiKey ) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body( "api-key wrong or missing" );
+            }
             JsonNode presentationResponse = objectMapper.readTree( body );
             String correlationId = presentationResponse.path("state").asText();
             String code = presentationResponse.path("code").asText();
@@ -432,8 +438,7 @@ public class ApiVCController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( "Technical error" );
         }    
         
-        return ResponseEntity.ok()
-          .body( "{}" );
+        return ResponseEntity.ok().body( "{}" );
     }
 
     @GetMapping("/api/presentation-response-status")

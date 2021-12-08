@@ -110,7 +110,7 @@ namespace client_api_test_service_dotnet
                     callback = new Callback() {
                         url = string.Format("{0}/presentation-callback", GetApiPath()),
                         state = correlationId,
-                        headers = new Dictionary<string, string>() { { "my-api-key", this.AppSettings.ApiKey } }
+                        headers = new Dictionary<string, string>() { { "api-key", this.AppSettings.ApiKey } }
                     },
                     presentation = new Presentation() {
                         includeReceipt = true,
@@ -152,6 +152,10 @@ namespace client_api_test_service_dotnet
             try {
                 string body = GetRequestBody();
                 _log.LogTrace(body);
+                this.Request.Headers.TryGetValue("api-key", out var apiKey);
+                if (this.AppSettings.ApiKey != apiKey) {
+                    return new ContentResult() { StatusCode = (int)HttpStatusCode.Unauthorized, Content = "api-key wrong or missing" };
+                }
                 VCCallbackEvent callback = JsonConvert.DeserializeObject<VCCallbackEvent>(body);
                 CacheObjectWithExpiery( callback.state, callback );
                 return new OkResult();

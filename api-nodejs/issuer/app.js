@@ -14,6 +14,7 @@ const https = require('https')
 const url = require('url')
 const { SSL_OP_COOKIE_EXCHANGE } = require('constants');
 var msal = require('@azure/msal-node');
+var uuid = require('uuid');
 
 //////////// didconfig file can come from command line, env var or the default
 var didConfigFile = process.argv.slice(2)[1];
@@ -60,6 +61,8 @@ const msalClientCredentialRequest = {
   scopes: ["bbb94529-53a3-4be5-a069-7eaf2712b826/.default"],
   skipCache: false, 
 };
+
+var apiKey = uuid.v4();
 
 //////////// Main Express server function
 // Note: You'll want to update port values for your setup.
@@ -166,6 +169,9 @@ app.get('/issue-request-api', async (req, res) => {
   // call the VC Client API  
   issuanceRequestConfig.callback.url = `https://${req.hostname}/issue-request-api-callback`;
   issuanceRequestConfig.callback.state = req.session.id;
+  if ( issuanceRequestConfig.callback.headers ) {
+    issuanceRequestConfig.callback.headers['api-key'] = apiKey;
+  }
   if ( issuanceRequestConfig.issuance.pin ) {
     issuanceRequestConfig.issuance.pin.value = generatePin();
   }
@@ -211,6 +217,12 @@ app.post('/issue-request-api-callback', parser, async (req, res) => {
   req.on('end', function () {
     requestTrace( req );
     console.log( body );
+    if ( req.headers['api-key'] != apiKey ) {
+      res.status(401).json({
+        'error': 'api-key wrong or missing'
+        });  
+      return; 
+    }
     var issuanceResponse = JSON.parse(body.toString());
     if ( issuanceResponse.code == "request_retrieved" ) {
       sessionStore.get(issuanceResponse.state, (error, session) => {

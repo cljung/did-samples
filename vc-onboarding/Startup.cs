@@ -14,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using vc_onboarding.Models;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace vc_onboarding
 {
@@ -34,7 +35,11 @@ namespace vc_onboarding
             //    .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));   // if you use Azure AD to sign in to
 
             services.AddControllersWithViews();
-
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders =
+                    ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            });
             services.AddRazorPages()
                 .AddMicrosoftIdentityUI();
             services.Configure<AppSettingsModel>(Configuration.GetSection("AppSettings"));
@@ -46,10 +51,12 @@ namespace vc_onboarding
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseForwardedHeaders();
             }
             else
             {
                 app.UseExceptionHandler("/Home/Error");
+                app.UseForwardedHeaders();
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
