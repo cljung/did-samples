@@ -261,43 +261,16 @@ app.post('/presentation-response-b2c', parserJson, async (req, res) => {
   // If a credential has been received, display the contents in the browser
   sessionStore.get( id, (error, store) => {
     if (store && store.sessionData && store.sessionData.status == 2 ) {
-      console.log("Has VC. Will return it to B2C");
-      
-      // We need to decode the id_token from the presentatior receipt. 
-      // It's in three layers: SIOP -> VP -> VC
-      // In the VC we want to pass back the 'iss' and the 'sub' claims for reference
-      // (Who issued this VC and who is the holder)
-      var jwtSIOP = jwt_decode( store.sessionData.presentationResponse.receipt.id_token );
-      var jwtVP;
-      for( var pres in jwtSIOP.attestations.presentations ) {
-        jwtVP = jwt_decode( jwtSIOP.attestations.presentations[pres] );  
-      }
-      var jwtVC = jwt_decode( jwtVP.vp.verifiableCredential[0] );
-
+      console.log("Has VC. Will return it to B2C");      
       var claims = store.sessionData.presentationResponse.issuers[0].claims;
-      var tid = null;
-      var oid = null;
-      var username = null;
-      try {
-        oid = claims.sub;
-        tid = claims.tid;
-        username = claims.username;
-      } catch {
-      }
-      var responseBody = {
-        'id': id, 
-        'credentialsVerified': true,
-        'credentialType': presentationRequestConfig.presentation.requestedCredentials[0].type,
-        'displayName': `${claims.firstName} ${claims.lastName}`,
-        'givenName': claims.firstName,
-        'surName': claims.lastName,
-        'iss': jwtVC.iss,    // who issued this VC?
-        'sub': jwtVC.sub,    // who are you?
-        'key': jwtVC.sub.replace("did:ion:", "did.ion.").split(":")[0], //.replace("did.ion.", "did:ion:"),
-        'oid': oid,
-        'tid': tid,
-        'username': username
-        };
+      var claimsExtra = {
+        'vcType': presentationRequestConfig.presentation.requestedCredentials[0].type,
+        'vcIss': store.sessionData.presentationResponse.issuers[0].authority,
+        'vcSub': store.sessionData.presentationResponse.subject,
+        'vcKey': store.sessionData.presentationResponse.subject.replace("did:ion:", "did.ion.").split(":")[0],
+        'displayName': `${claims.firstName} ${claims.lastName}`
+        };        
+        var responseBody = { ...claimsExtra, ...claims }; // merge the two structures
         req.session.sessionData = null; // wack it
         console.log( responseBody );
         res.status(200).json( responseBody );   

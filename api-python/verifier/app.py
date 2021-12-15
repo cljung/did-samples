@@ -79,7 +79,9 @@ def echoApi():
         'displayCard': manifest["display"]["card"],
         'buttonColor': "#000080"
     }
-    return Response( json.dumps(result), status=200, mimetype='application/json')
+    response = Response( json.dumps(result), status=200, mimetype='application/json')
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 @app.route("/presentation-request", methods = ['GET'])
 def presentationRequest():
@@ -104,7 +106,9 @@ def presentationRequest():
     resp = r.json()
     print(resp)
     resp["id"] = id            
-    return Response( json.dumps(resp), status=200, mimetype='application/json')
+    response = Response( json.dumps(resp), status=200, mimetype='application/json')
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 @app.route("/presentation-request-api-callback", methods = ['GET'])
 def presentationRequestApiCallbackGET():
@@ -137,7 +141,7 @@ def presentationRequestStatus():
     id = request.args.get('id')
     print(id)
     data = cache.get(id)
-    print(data)
+#    print(data)
     if data is not None:
         cacheData = json.loads(data)
         if cacheData["status"] == 1:
@@ -151,9 +155,12 @@ def presentationRequestStatus():
                 'message': cacheData["message"],
                 'claims': cacheData["presentationResponse"]["issuers"][0]["claims"]
             }
-        return Response( json.dumps(browserData), status=200, mimetype='application/json')
+        response = Response( json.dumps(browserData), status=200, mimetype='application/json')
     else:
-        return ""
+        response = Response( "", status=200, mimetype='application/json')
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
 
 def decodeJwtToken(token):
     return json.loads( base64.b64decode(token.split('.')[1]+'==').decode("utf-8") )
@@ -168,35 +175,15 @@ def presentationResponseB2C():
     if data is not None:
         cacheData = json.loads(data)
         if cacheData["status"] == 2:
-            jwtSIOP = decodeJwtToken( cacheData["presentationResponse"]["receipt"]["id_token"] )
-            jwtVP = None
-            for pres in jwtSIOP["attestations"]["presentations"]:
-                jwtVP = decodeJwtToken( jwtSIOP["attestations"]["presentations"][pres] )
-            jwtVC = decodeJwtToken( jwtVP["vp"]["verifiableCredential"][0] )
             claims = cacheData["presentationResponse"]["issuers"][0]["claims"]
-            tid = None
-            oid = None
-            username = None
-            if "sub" in claims:
-                oid = claims["sub"]
-            if "tid" in claims:
-                tid = claims["tid"]
-            if "username" in claims:
-                username = claims["username"]
-            responseBody = {
-               'id': id, 
-               'credentialsVerified': True,
-               'credentialType': presentationConfig["presentation"]["requestedCredentials"][0]["type"],
-               'displayName': claims["firstName"] + " " + claims["lastName"],
-               'givenName': claims["firstName"],
-               'surName': claims["lastName"],
-               'iss': jwtVC["iss"],    # who issued this VC?
-               'sub': jwtVC["sub"],    # who are you?
-               'key': jwtVC["sub"].replace("did:ion:", "did.ion.").split(":")[0].replace("did.ion.", "did:ion:"),
-               'oid': oid,
-               'tid': tid,
-               'username': username 
+            claimsExtra = {
+               'vcType': presentationConfig["presentation"]["requestedCredentials"][0]["type"],
+               'vcIss': cacheData["presentationResponse"]["issuers"][0]["authority"],
+               'vcSub': cacheData["presentationResponse"]["subject"],
+               'vcKey': cacheData["presentationResponse"]["subject"].replace("did:ion:", "did.ion.").split(":")[0].replace("did.ion.", "did:ion:"),
+               'displayName': claims["firstName"] + " " + claims["lastName"]
             }
+            responseBody = {**claimsExtra, **claims} # merge
             return Response( json.dumps(responseBody), status=200, mimetype='application/json')
 
     errmsg = {
@@ -207,4 +194,4 @@ def presentationResponseB2C():
     return Response( json.dumps(errmsg), status=409, mimetype='application/json')
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8082)

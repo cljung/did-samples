@@ -136,6 +136,114 @@ function generatePin () {
   return ("0" + (Math.floor(Math.random() * (max - min + 1)) + min)).substr(-4);
 }
 
+app.get('/issue-request-redirect', function (req, res) { 
+  requestTrace( req );
+  // prep a session state of 0
+  sessionStore.get(req.session.id, (error, session) => {
+    var sessionData = {
+      "status" : 0,
+      "message": "Waiting for QR code to be scanned",
+      "pin": null
+    };
+    if ( issuanceRequestConfig.issuance.pin ) {
+      sessionData.pin = generatePin();
+    }
+    if ( session ) {
+      session.sessionData = sessionData;
+      sessionStore.set( req.session.id, session);  
+    }
+    res.status(200).json({
+      'url': `openid://vc/?request_uri=https://${req.hostname}/issue-request-api-redirect?id=${req.session.id}`,
+      'id': req.session.id,
+      'pin': sessionData.pin
+      });  
+    });
+})
+
+app.get('/issue-request-api-redirect', async (req, res) => {
+  requestTrace( req );
+
+  var pinCode = null;
+  // prep a session state of 0
+  sessionStore.get(req.query.id, (error, session) => {
+    if ( session ) {
+      pinCode = session.sessionData.pin;
+      session.sessionData.message = "Redirecting...";
+      sessionStore.set( req.query.id, session);  
+    }
+  });
+
+  // get the Access Token
+  var accessToken = "";
+  try {
+    const result = await cca.acquireTokenByClientCredential(msalClientCredentialRequest);
+    if ( result ) {
+      accessToken = result.accessToken;
+    }
+  } catch {
+      res.status(401).json({
+        'error': 'Could not acquire credentials to access your Azure Key Vault'
+        });  
+      return; 
+  }
+  console.log( `accessToken: ${accessToken}` );
+
+  // call the VC Client API  
+  issuanceRequestConfig.callback.url = `https://${req.hostname}/issue-request-api-callback`;
+  issuanceRequestConfig.callback.state = req.session.id;
+  if ( issuanceRequestConfig.callback.headers ) {
+    issuanceRequestConfig.callback.headers['api-key'] = apiKey;
+  }
+  if ( issuanceRequestConfig.issuance.pin ) {
+    issuanceRequestConfig.issuance.pin.value = pinCode;
+  }
+  if ( issuanceRequestConfig.issuance.claims ) {
+    for( var claimName in issuanceRequestConfig.issuance.claims ) {
+      issuanceRequestConfig.issuance.claims[claimName] = req.query[claimName];
+    }
+  }
+
+  console.log( 'VC Client API Request' );
+  console.log( issuanceRequestConfig );
+
+  var payload = JSON.stringify(issuanceRequestConfig);
+  const fetchOptions = {
+    method: 'POST',
+    body: payload,
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': payload.length.toString(),
+      'Authorization': `Bearer ${accessToken}`
+    }
+  };
+
+  var client_api_request_endpoint = `https://beta.did.msidentity.com/v1.0/${config.azTenantId}/verifiablecredentials/request`;
+  const response = await fetch(client_api_request_endpoint, fetchOptions);
+  var apiResp = await response.json()
+
+  apiResp.id = req.session.id;                              // add session id so browser can pull status
+  if ( issuanceRequestConfig.issuance.pin ) {
+    apiResp.pin = issuanceRequestConfig.issuance.pin.value;   // add pin code so browser can display it
+  }
+  console.log( 'VC Client API Response' );
+  console.log( apiResp );
+  
+  //res.status(200).json(apiResp);       
+  //res.redirect( `openid://vc/?request_uri=${apiResp.url}` );
+  //res.redirect( redir_url );
+  var redir_url = apiResp.url.replace("openid://vc/?request_uri=","");
+  console.log( redir_url )
+
+  const fetchOptions2 = {
+    method: 'GET'
+  };
+  const response2 = await fetch( redir_url, fetchOptions2 );
+  respData = await response2.text()
+  console.log( respData );
+  res.setHeader('content-type', 'application/jwt');
+  res.send( respData );  
+})
+
 app.get('/issue-request-api', async (req, res) => {
   requestTrace( req );
 
