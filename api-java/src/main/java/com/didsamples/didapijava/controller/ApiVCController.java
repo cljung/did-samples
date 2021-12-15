@@ -1,4 +1,4 @@
-package com.didsamples.clientapitestservicejava.controller;
+package com.didsamples.didapijava.controller;
 
 import java.util.*;
 import java.util.logging.*;
@@ -197,6 +197,7 @@ public class ApiVCController {
         }    
     }
 
+    @CrossOrigin(origins = "*")
     @GetMapping("/api/echo")
     public ResponseEntity<String> echo( HttpServletRequest request, @RequestHeader HttpHeaders headers ) {
         traceHttpRequest( request );
@@ -242,6 +243,7 @@ public class ApiVCController {
     // *********************************************************************************
     // Issuance
     // *********************************************************************************
+    @CrossOrigin(origins = "*")
     @GetMapping("/api/issue-request")
     public ResponseEntity<String> issueRequest( HttpServletRequest request, @RequestHeader HttpHeaders headers ) {
         traceHttpRequest( request );
@@ -303,7 +305,8 @@ public class ApiVCController {
         lgr.info( body );
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            if ( request.getHeader("api-key") != apiKey ) {
+            if ( !request.getHeader("api-key").equals(apiKey) ) {
+                lgr.info( "api-key wrong or missing" );
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body( "api-key wrong or missing" );
             }
             JsonNode presentationResponse = objectMapper.readTree( body );
@@ -334,6 +337,7 @@ public class ApiVCController {
           .body( "{}" );
     }
 
+    @CrossOrigin(origins = "*")
     @GetMapping("/api/issue-response-status")
     public ResponseEntity<String> issueResponseStatus( HttpServletRequest request
                                                             , @RequestHeader HttpHeaders headers
@@ -365,6 +369,7 @@ public class ApiVCController {
     // *********************************************************************************
     // Presentation
     // *********************************************************************************
+    @CrossOrigin(origins = "*")
     @GetMapping("/api/presentation-request")
     public ResponseEntity<String> presentationRequest( HttpServletRequest request, @RequestHeader HttpHeaders headers ) {
         traceHttpRequest( request );
@@ -412,28 +417,32 @@ public class ApiVCController {
         lgr.info( body );
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            if ( request.getHeader("api-key") != apiKey ) {
+            if ( !request.getHeader("api-key").equals(apiKey) ) {
+                lgr.info( "api-key wrong or missing" );
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body( "api-key wrong or missing" );
             }
             JsonNode presentationResponse = objectMapper.readTree( body );
-            String correlationId = presentationResponse.path("state").asText();
             String code = presentationResponse.path("code").asText();
             ObjectNode data = null;
 
             if ( code.equals( "request_retrieved" ) ) {
                 data = objectMapper.createObjectNode();
+                data.put("status", 1 );
                 data.put("message", "QR Code is scanned. Waiting for validation..." );
             }
             if ( code.equals( "presentation_verified") ) {
                 data = objectMapper.createObjectNode();
-                data.put("message", presentationResponse.path("issuers").get(0).path("claims").path("displayName").asText() );
+                //data.put("message", presentationResponse.path("issuers").get(0).path("claims").path("displayName").asText() );
+                data.put("status", 2 );
+                data.put("message", "VC Presented" );
                 data.set("presentationResponse", presentationResponse );
             }
             if ( data != null ) {
-                data.put("status", code );
+                data.put("code", code );
                 cache.put( presentationResponse.path("state").asText(), objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data) );
             }
         } catch (java.io.IOException ex) {
+            lgr.info( ex.getMessage() );
             ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( "Technical error" );
         }    
@@ -441,6 +450,7 @@ public class ApiVCController {
         return ResponseEntity.ok().body( "{}" );
     }
 
+    @CrossOrigin(origins = "*")
     @GetMapping("/api/presentation-response-status")
     public ResponseEntity<String> presentationResponseStatus( HttpServletRequest request
                                                             , @RequestHeader HttpHeaders headers
@@ -488,7 +498,6 @@ public class ApiVCController {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body( formatB2CError( "Verifiable Credentials not presented" ) );
             } 
             JsonNode cacheData = objectMapper.readTree( data  );
-            ObjectNode b2cResponse = objectMapper.createObjectNode();
             String didSubject = cacheData.path("presentationResponse").path("subject").asText();
             String didIssuer = cacheData.path("presentationResponse").path("issuers").get(0).path("authority").asText();
             JsonNode vcClaims = cacheData.path("presentationResponse").path("issuers").get(0).path("claims");
@@ -503,18 +512,13 @@ public class ApiVCController {
             JsonNode rootNode = objectMapper.readTree( manifest );
             String credentialType = rootNode.path("id").asText();
 
-            b2cResponse.put("id", correlationId );
-            b2cResponse.put("credentialType", credentialType );
-            b2cResponse.put("iss", didIssuer );
-            b2cResponse.put("sub", didSubject );
-            b2cResponse.put("key", didSubject.replace("did:ion:", "did.ion.").split(":")[0] );
-            b2cResponse.put("tid", getClaimValue( vcClaims, "tid" ) );
-            b2cResponse.put("oid", getClaimValue( vcClaims, "sub" ) );
-            b2cResponse.put("username", getClaimValue( vcClaims, "username" ) );
-            b2cResponse.put("givenName", firstName );
-            b2cResponse.put("surName", lastName );
-            b2cResponse.put("displayName", displayName );
-            responseBody = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(b2cResponse);
+            ((ObjectNode) vcClaims).put("vcType", credentialType);
+            ((ObjectNode) vcClaims).put("vcIss", didIssuer);
+            ((ObjectNode) vcClaims).put("vcSub", didSubject);
+            ((ObjectNode) vcClaims).put("vcKey", didSubject.replace("did:ion:", "did.ion.").split(":")[0] );
+            ((ObjectNode) vcClaims).put("displayName", displayName);
+
+            responseBody = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(vcClaims);
         } catch (java.io.IOException ex) {
             ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.CONFLICT).body( formatB2CError( "Technical error" ) );
@@ -538,5 +542,4 @@ public class ApiVCController {
             return null;
         }
     }
-
 } // cls

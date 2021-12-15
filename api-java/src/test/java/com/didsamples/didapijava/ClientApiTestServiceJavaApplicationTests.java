@@ -1,4 +1,4 @@
-package com.didsamples.clientapitestservicejava;
+package com.didsamples.didapijava;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
