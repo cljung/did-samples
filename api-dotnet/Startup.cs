@@ -18,7 +18,7 @@ namespace client_api_test_service_dotnet
     {
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            Configuration = configuration;            
         }
 
         public IConfiguration Configuration { get; }
@@ -75,6 +75,7 @@ namespace client_api_test_service_dotnet
                 endpoints.MapDefaultControllerRoute();
             });
 
+            System.Environment.SetEnvironmentVariable("INMEM-API-KEY", Guid.NewGuid().ToString() );
         }
     }
 }

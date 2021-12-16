@@ -63,7 +63,7 @@ namespace client_api_test_service_dotnet
 
         [HttpGet("/api/verifier/echo")]
         public ActionResult Echo() {
-            TraceHttpRequest();
+            TraceHttpRequest();            
             try
             {
                 JObject manifest = GetPresentationManifest();
@@ -110,10 +110,10 @@ namespace client_api_test_service_dotnet
                     callback = new Callback() {
                         url = string.Format("{0}/presentation-callback", GetApiPath()),
                         state = correlationId,
-                        headers = new Dictionary<string, string>() { { "api-key", this.AppSettings.ApiKey } }
+                        headers = new Dictionary<string, string>() { { "api-key", this._apiKey } }
                     },
                     presentation = new Presentation() {
-                        includeReceipt = true,
+                        includeReceipt = false,
                         requestedCredentials = new List<RequestedCredential>()
                     }
                 };
@@ -153,7 +153,7 @@ namespace client_api_test_service_dotnet
                 string body = GetRequestBody();
                 _log.LogTrace(body);
                 this.Request.Headers.TryGetValue("api-key", out var apiKey);
-                if (this.AppSettings.ApiKey != apiKey) {
+                if ( this._apiKey != apiKey) {
                     return new ContentResult() { StatusCode = (int)HttpStatusCode.Unauthorized, Content = "api-key wrong or missing" };
                 }
                 VCCallbackEvent callback = JsonConvert.DeserializeObject<VCCallbackEvent>(body);
@@ -215,26 +215,19 @@ namespace client_api_test_service_dotnet
                 }
                 // remove cache data now, because if we crash, we don't want to get into an infinite loop of crashing 
                 RemoveCacheValue(correlationId);
-
                 // setup the response that we are returning to B2C
                 var obj = new {
-                    id = correlationId,
-                    credentialsVerified = true,
-                    credentialType = callback.issuers[0].type[callback.issuers[0].type.Length - 1], // last
-                    domain = callback.issuers[0].domain,
-                    domainVerified = callback.issuers[0].verified,
-                    iss = callback.issuers[0].authority,
-                    sub = callback.subject,
+                    vcType = callback.issuers[0].type[callback.issuers[0].type.Length - 1], // last
+                    vcIss = callback.issuers[0].authority,
+                    vcSub = callback.subject,
                     // key is intended to be user in user's profile 'identities' collection as a signInName,
                     // and it can't have colons, therefor we modify the value (and clip at following :)
-                    key = callback.subject.Replace("did:ion:", "did.ion.").Split(":")[0]
+                    vcKey = callback.subject.Replace("did:ion:", "did.ion.").Split(":")[0]
                 };
                 JObject b2cResponse = JObject.Parse(JsonConvert.SerializeObject(obj));
                 // add all the additional claims in the VC as claims to B2C
                 foreach (KeyValuePair<string, string> kvp in callback.issuers[0].claims) {
-                    if ( kvp.Key == "sub" ) // we already have a 'sub' above, so if you added that to your VC claims, it will show up as 'oid'
-                         b2cResponse.Add(new JProperty("oid", kvp.Value));
-                    else b2cResponse.Add(new JProperty(kvp.Key, kvp.Value));
+                    b2cResponse.Add(new JProperty(kvp.Key, kvp.Value));
                 }
                 string resp = JsonConvert.SerializeObject(b2cResponse);
                 _log.LogTrace(resp);

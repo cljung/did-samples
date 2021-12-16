@@ -255,15 +255,15 @@ PublicPolicyUri="http://yourtenant.onmicrosoft.com/B2C_1A_VC_TrustFrameworkExten
             <!-- Key to auth result. Comes from the UX -->
           </InputClaims>
           <OutputClaims>
-            <OutputClaim ClaimTypeReferenceId="displayName" />
-            <OutputClaim ClaimTypeReferenceId="givenName" />
-            <OutputClaim ClaimTypeReferenceId="surName" />
-            <OutputClaim ClaimTypeReferenceId="VCCredentialType" PartnerClaimType="credentialType" />
-            <OutputClaim ClaimTypeReferenceId="VCSubject" PartnerClaimType="sub" />
-            <OutputClaim ClaimTypeReferenceId="VCIssuer" PartnerClaimType="iss" />
-            <OutputClaim ClaimTypeReferenceId="VCKey" PartnerClaimType="key" />
-            <OutputClaim ClaimTypeReferenceId="objectId" PartnerClaimType="oid" />
+            <OutputClaim ClaimTypeReferenceId="VCCredentialType" PartnerClaimType="vcType" />
+            <OutputClaim ClaimTypeReferenceId="VCSubject" PartnerClaimType="vcSub" />
+            <OutputClaim ClaimTypeReferenceId="VCIssuer" PartnerClaimType="vcIss" />
+            <OutputClaim ClaimTypeReferenceId="VCKey" PartnerClaimType="vcKey" />
+            <OutputClaim ClaimTypeReferenceId="objectId" PartnerClaimType="sub" />
             <OutputClaim ClaimTypeReferenceId="email" PartnerClaimType="username" />
+            <OutputClaim ClaimTypeReferenceId="displayName" />
+            <OutputClaim ClaimTypeReferenceId="givenName" PartnerClaimType="firstName" />
+            <OutputClaim ClaimTypeReferenceId="surName" PartnerClaimType="lastName" />
             <OutputClaim ClaimTypeReferenceId="identityProvider" DefaultValue="DID" AlwaysUseDefaultValue="true" />
           </OutputClaims>
           <UseTechnicalProfileForSessionManagement ReferenceId="SM-Noop" />

@@ -28,6 +28,7 @@ namespace client_api_test_service_dotnet
         protected readonly IConfiguration _configuration;
         private string _apiEndpoint;
         private string _authority;
+        public string _apiKey;
 
         public ApiBaseVCController(IConfiguration configuration, IOptions<AppSettingsModel> appSettings, IMemoryCache memoryCache, IWebHostEnvironment env, ILogger<ApiBaseVCController> log)
         {
@@ -40,6 +41,7 @@ namespace client_api_test_service_dotnet
             _apiEndpoint = string.Format(this.AppSettings.ApiEndpoint, this.AppSettings.TenantId);
             _authority = string.Format(this.AppSettings.Authority, this.AppSettings.TenantId);
 
+            _apiKey = System.Environment.GetEnvironmentVariable("INMEM-API-KEY");
         }
 
         /// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
