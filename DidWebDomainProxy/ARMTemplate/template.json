@@ -10,27 +10,6 @@
         "description": "app name."
       }
     },
-    "repoURL": {
-      "type": "string",
-      "metadata": {
-        "description": "Github repo URL"
-      },
-      "defaultValue": "https://github.com/cljung/did-samples.git"
-    },
-    "branch": {
-      "type": "string",
-      "metadata": {
-        "description": "Github repo branch"
-      },
-      "defaultValue": "main"
-    },
-    "Project": {
-      "type": "string",
-      "metadata": {
-        "description": "Github repo subfolder"
-      },
-      "defaultValue": "DidWebDocumentProxy"
-    },
     "remoteHostname": {
       "type": "string",
       "metadata": {
@@ -40,6 +19,9 @@
     }
   },
   "variables": {
+    "repoURL": "https://github.com/cljung/did-samples.git",
+    "branch": "main",
+    "Project": "DidWebDomaintProxy",
     "appServicePlanPortalName": "[concat(parameters('webAppName'), '-plan')]"
   },
   "resources": [
@@ -127,7 +109,7 @@
             },
             {
               "name": "PROJECT",
-              "value": "[parameters('Project')]"
+              "value": "[variables('Project')]"
             },
             {
               "name": "AppSettings__CacheExpiresInSeconds",
@@ -163,8 +145,8 @@
             "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
           ],
           "properties": {
-            "repoUrl": "[parameters('repoURL')]",
-            "branch": "[parameters('branch')]",
+            "repoUrl": "[variables('repoURL')]",
+            "branch": "[variables('branch')]",
             "isManualIntegration": true
           }
         }
