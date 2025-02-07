@@ -21,7 +21,7 @@
   "variables": {
     "repoURL": "https://github.com/cljung/did-samples.git",
     "branch": "main",
-    "Project": "DidWebDomaintProxy",
+    "Project": "DidWebDomainProxy",
     "appServicePlanPortalName": "[concat(parameters('webAppName'), '-plan')]"
   },
   "resources": [
