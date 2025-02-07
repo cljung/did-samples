@@ -124,11 +124,11 @@
               "value": "User-Agent;Accept-Encoding;Accept-Language"
             },
             {
-              "name": "[concat('domainMap-https://', parameters('webAppName'), '.azurewebsites.net')]",
+              "name": "[concat('AppSettings__domainMap-https://', parameters('webAppName'), '.azurewebsites.net')]",
               "value": "[parameters('remoteHostname')]"
             },
             {
-              "name": "domainMap-https://your-domain-replace-when-you-know.com",
+              "name": "AppSettings__domainMap-https://your-domain-replace-when-you-know.com",
               "value": "[parameters('remoteHostname')]"
             }
           ]
