@@ -1,6 +1,6 @@
 # DID Domain Proxy for Microsoft Entra Verified ID
 
-If you are hosting your `did.json` DID Document file on Azure Storage, as described in the public docs [here](https://learn.microsoft.com/en-us/azure/app-service/app-service-web-tutorial-custom-domain), you can use this sample as a proxy to get a real domain infront of it.
+If you are hosting your `did.json` DID Document file on Azure Storage, as described in the public docs [here](https://learn.microsoft.com/en-us/entra/verified-id/how-to-dnsbind#linked-domain-made-easy-for-developers), you can use this sample as a proxy to get a real domain infront of it.
 
 ## Why should I use this app?
 
@@ -95,7 +95,7 @@ When updating the configuration in Azure App Services, remember that the environ
 
 ## Setting up a domain in Azure App Services
 
-Use the `Custom Domain` configuration section and add your custom domain as documented here []().
+Use the `Custom Domain` configuration section and add your custom domain as documented [here](https://learn.microsoft.com/en-us/azure/app-service/app-service-web-tutorial-custom-domain).
 
 For the DID Document to work in Microsoft Entra Verified ID, the domain name must match what you specified as `linked domain`. 
 Ie, if your Verified ID domain is `did.woodgrovedemo.com`, that is the custom domain you must add, and that is the mapping you must have in your app's configuration.
