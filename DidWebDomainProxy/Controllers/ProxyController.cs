@@ -51,7 +51,7 @@ namespace DidWebDomainProxy.Controllers
             return hostname;
         }
         private string RewriteUrl() {
-            string host = GetRequestHostName();
+            string host = GetRequestHostName().Replace("https://", "");
             string mappedHost = _configuration[$"AppSettings:domainMap-{host}"];  
             if ( mappedHost == null ) {
                 mappedHost = _configuration[$"AppSettings:domainMap-{host}/"];
