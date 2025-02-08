@@ -162,6 +162,15 @@ namespace DidWebDomainProxy.Controllers
                         sb.Append( $"{h.Key}: {h.Value.First()}\n" );
                     }
                 }
+                // set the X-Forwarded-* headers
+                _httpClient.DefaultRequestHeaders.Add( "X-Forwarded-Host", this.Request.Host.ToString() );
+                sb.Append( $"X-Forwarded-Host: {this.Request.Host.ToString()}" );
+                _httpClient.DefaultRequestHeaders.Add( "X-Forwarded-Proto", this.Request.Scheme );
+                sb.Append( $"X-Forwarded-Proto: {this.Request.Scheme}" );
+                string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                _httpClient.DefaultRequestHeaders.Add( "X-Forwarded-For", ipAddress );
+                sb.Append( $"X-Forwarded-For: {ipAddress}" );
+
                 _log.LogTrace( $"Fetching {urlNew}\n{sb.ToString()}" );
 
                 HttpResponseMessage res = _httpClient.GetAsync( urlNew ).Result;
