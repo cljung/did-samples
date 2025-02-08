@@ -7,11 +7,11 @@ If you are hosting your `did.json` DID Document file on Azure Storage, as descri
 If you have control over your DNS (or have a friendly admin who has and can help you), but you can't or won't deploy the did.json and did-configuration.json files to a webserver 
 running on that hostname, you can use the Azure Storage to host these files and use this app as a proxy.
 
-Azure Front Door is a more robust, powerful and professional solution of achieving the same thing, but perhaps you find it too much overhead to deploy it for your POC/demo/etc environment.
+[Azure Front Door](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-custom-domain-name?tabs=azure-portal#map-a-custom-domain-with-https-enabled) is a more robust, powerful and professional solution of achieving the same thing, but perhaps you find it too much overhead to deploy it for your POC/demo/etc environment.
 
 ## How it works?
 
-You configure your hostname mapping to map a domain name to your Azure Storate static website hostname. Then you deploy the app to Azure App Services and add your custom domain to it (same domain you have in your mapping).
+You configure your hostname mapping to [map a domain name](https://learn.microsoft.com/en-us/azure/app-service/app-service-web-tutorial-custom-domain) to your [Azure Storage static website](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website) hostname. Then you deploy the app to Azure App Services and add your custom domain to it (same domain you have in your mapping).
 The app will then act as a proxy and get the did.json file from Azure Storage and serve the contents to the caller.
 
 ```JSON
