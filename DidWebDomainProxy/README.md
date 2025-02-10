@@ -28,9 +28,9 @@ cache the response and return the contents to the caller.
 
 ### HTTP Methods
 
-Only HTTP GET is supported. All paths are forwarded as is and there is no URL rewrite (other than changing the hostname).
+Only HTTP GET and HEAD are supported. All paths are forwarded as is and there is no URL rewrite (other than changing the hostname).
 
-HTTP HEAD or OPTIONS could potentially be supported, but currently they are not. HTTP POST, PUT, PATCH and DELETE are not supported as they modify content on the remote webserver 
+HTTP POST, PUT, PATCH and DELETE are not supported as they modify content on the remote webserver 
 and that is beyond the scope of this simple app.
 
 ### Headers
@@ -73,14 +73,20 @@ The cache will store content plus headers received from the remote webserver and
 
 The app will add extra header `x-dwdp-cached` if the content is served from cache.
 
-To invalidate the cache for a URL, do one the following:
+Requests with header Cache-Control and value `no-cache` will not use any cached response and instead retrieve content from remote webserver. 
+Requests with header Cache-Control and value `no-store` will not cache response from remote webserver but may use content from cache. 
+Using both `no-cache` and `no-store` means don't use cache at all.
 
-1.  Make a HTTP GET request qith the query string parameter `?no-cache=1`
-1.  Make a HTTP GET request with the HTTP header `Cache-Control: no-cache`
+If you need retrieve the content from the remote webserver and update the cache, run the following powershell command
 
-This will bypass the cache and retrieve the content from the remote webserver (then cache it again).
+```Powershell
+Invoke-RestMethod -Method "GET" -Uri $url -headers @{'Cache-Control'='no-cache'}
+```
 
 You need to restart the Azure App Service if you want to flush the entire cache and not invalidate URLs one-by-one. 
+
+If a HEAD request returns an ETag header value that is different than the cached ETag value for a GET request with the same URL, 
+then the cached content for the GET request is removed - and vice versa.
 
 ## Deploy to Azure App Services
 
