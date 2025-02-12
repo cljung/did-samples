@@ -152,9 +152,22 @@ namespace DidWebDomainProxy.Controllers
             foreach (var hdr in metadata.Headers) {
                 this.Response.Headers.Append( hdr.Key, hdr.Value );
             }
+            CacheRemoteContent( metadata, null ); // update cache with #hits
             metadata.cacheHits++;
-            CacheRemoteContent( metadata, null );
             this.Response.Headers.Append( "x-dwdp-cached", metadata.cachedDate );
+            // should we return a 304 Not Moified?
+            if ( TryGetRequestHeaderValue( "If-Modified-Since", out string ifModifiedSince) && TryGetRequestHeaderValue( "If-None-Match", out string ifNoneMatch )
+                && metadata.Headers.ContainsKey("Last-Modified") && metadata.Headers.ContainsKey( "ETag" )) {
+                string eTag = metadata.Headers["ETag"].ToString();
+                if ( eTag == ifNoneMatch 
+                    && DateTime.TryParse( metadata.Headers["Last-Modified"], out DateTime lastModified )
+                    && DateTime.TryParse( ifModifiedSince, out DateTime modifiedSince ) ) {
+                    if ( lastModified <= modifiedSince ) {
+                        _log.LogTrace( $"Returning 304 for {url}\nLast-Modified: {lastModified.ToString()}, If-Modified-Since: {modifiedSince.ToString()}, Etag:{eTag}" );
+                        return new ContentResult { StatusCode = (int?)HttpStatusCode.NotModified };
+                    }
+                }
+            }
             _log.LogTrace( $"Using cached content for {url}\nCached at: {metadata.cachedDate}\nExpiry: {metadata.expiry}\nCache hits: {metadata.cacheHits}" );
             return new ContentResult { StatusCode = (int?)(HttpStatusCode)metadata.StatusCode, Content = content };
         }

@@ -83,6 +83,12 @@ If you need retrieve the content from the remote webserver and update the cache,
 Invoke-RestMethod -Method "GET" -Uri $url -headers @{'Cache-Control'='no-cache'}
 ```
 
+The app will return a 304 Not Modified if:
+
+- The remote webserver returned headers `ETag` and `Last-Modified` in the previous cached response
+- The caller sends request headers `If-Modified-Since` and `If-None-Match` headers
+- The `If-None-Match` in the request header matches the cached ETag value and the `Last-Modified` value is less than or equal to `If-Modified-Since`
+
 You need to restart the Azure App Service if you want to flush the entire cache and not invalidate URLs one-by-one. 
 
 If a HEAD request returns an ETag header value that is different than the cached ETag value for a GET request with the same URL, 
