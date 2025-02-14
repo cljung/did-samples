@@ -27,7 +27,7 @@ If you deploy this app to Azure App Services, it needs to atleast have a B1 plan
 
 This video shows using this sample in action
 
-[![alt text](../media/EAM-screenshot.png)](../media/VierifiedID-EAM-MFA.mp4)
+[![alt text](../media/EAM-screenshot.png)](https://github.com/cljung/did-samples/raw/refs/heads/main/media/VierifiedID-EAM-MFA.mp4)
 
 ## How does this sample work?
 
