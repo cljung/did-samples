@@ -1,0 +1,53 @@
+﻿@{
+    ViewData["Title"] = "Authorize";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Entra Verified ID MFA page</h1>
+    <p>
+        You are required to do a liveness check using your Microsoft Authenticator on your mobile phone. 
+    </p>
+    <p>
+        <div id="message-wrapper" class="margin-bottom-75">
+            <i class="fas fa-user-check green icon-text-large margin-bottom-25"></i>
+            <div id="message">@ViewData["Message"]</div>
+            <br />
+        </div>
+        <br />
+
+        <label for="Name">Name: </label>
+        <input type="text" id="Name" value='@ViewData["name"]' readonly style="border:0;width:250px;"><br /><br />
+
+        <label for="signInName">Userid: </label>
+        <input type="text" id="signInName" value='@ViewData["username"]' readonly style="border:0;width:250px;"><br /><br />
+
+        <!--<button type="button" onclick="signIn()">Sign in</button>-->
+        <button type="button" id="verify-credential" class="button navbar-bg navbar-text" style="display:none">Verify Credential</button>
+        <button type="button" id="check-result" class="button navbar-bg navbar-text" style="display:none;">Check Result</button>
+
+        <br /><br/>
+        <div id="qrcode" style="text-align:center;display:none;margin-left:40%;"></div>
+
+        <script src="/qrcode.min.js"></script>
+        <script src="/verifiedid.requestservice.client.js"></script>
+        <script src="/verifiedid.uihandler.js"></script>
+
+    </p>
+</div>
+<script>
+    var qrcode = new QRCode("qrcode", { width: 150, height: 150 });
+
+    function presentationReceived(id, response) {
+        hideQRCode();
+        displayMessage("Presentation received");
+        document.location = '@ViewData["apiNext"]';
+    }
+
+    requestService.onPresentationVerified = presentationReceived;
+    requestService.apiPollPresentationRequest = '@ViewData["apiPoll"]';
+    requestService.requestType = 'presentation';
+    requestService.request = { 'requestId': '@ViewData["requestId"]', 'expiry': @ViewData["requestExpiry"], 'id': '@ViewData["txid"]', 'url': '@ViewData["requestUrl"]' };
+    requestService.processRequest();
+
+</script>
+

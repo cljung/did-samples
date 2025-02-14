@@ -1,0 +1,30 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+.navbar-bg {
+    background-color: #505050;
+}
+
+.navbar-text {
+    color: white !important;
+}
+
+.navbar {
+    background-color: #505050;
+}

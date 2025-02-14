@@ -1,0 +1,35 @@
+﻿@{
+    ViewData["Title"] = "FormPost";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Entra Verified ID MFA page</p>
+    <p>
+        <label for="signInName">Userid: </label>
+        <input type="text" id="signInName" value='@ViewData["username"]' readonly><br /><br />
+
+        <button type="button" onclick="signIn()">Sign in</button>
+
+    </p>
+</div>
+<script>
+    function signIn() {
+        document.getElementById('error-msg').style.display = "none";
+        var signInName = document.getElementById('signInName').value;
+        var password = document.getElementById('password').value;
+        $.ajax({
+            url: '@ViewData["apiValidate"]',
+            type: 'post',
+            data: 'signInName=' + signInName + '&txid={{txid}}',
+            contentType: 'application/x-www-form-urlencoded',
+            success: function (response) {
+                document.location = '@ViewData["apiNext"]';
+            }, error: function (jqXhr, textStatus, errorThrown) {
+                document.getElementById('error-msg').innerHTML = jqXhr.responseText;
+                document.getElementById('error-msg').style.display = "block";
+            }
+        });
+    }
+</script>
+
