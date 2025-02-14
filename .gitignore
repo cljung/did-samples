@@ -343,3 +343,11 @@ docker.[Dd]evelopment.cmd
 docker.[Dd]evelopment.sh
 
 /VerifiedEmployee/
+
+# ignore (private) dev settings
+appsettings.[Dd]evelopment.json
+
+[Pp]ublish[Pp]rofiles/
+[Ss]ervice[Dd]ependencies
+
+.dev/
