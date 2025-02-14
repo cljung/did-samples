@@ -27,7 +27,7 @@ If you deploy this app to Azure App Services, it needs to atleast have a B1 plan
 
 This video shows using this sample in action
 
-<video src="../media/VierifiedID-EAM-MFA.mp4" width="320" height="240" controls>VerifiedID EAM video</video>
+[![alt text](../media/EAM-screenshot.png)](../media/VierifiedID-EAM-MFA.mp4)
 
 ## How does this sample work?
 
@@ -56,8 +56,7 @@ When you configure EAM in the Entra portal, you do it in the following way:
 
 | Item | Value | Content-Type |
 |------|--------|--------|
-| Client ID | DID of your Verified ID authority | We need to pass the accepted issuing authority of the VC being requested. 
-That could be configured in appsettings.json, etc, but that would limit the sample from being multi-tenant. This value is going to be passed as the `client_id` claim in the id_token_hint Entra ID passes in the /authorize call. |
+| Client ID | DID of your Verified ID authority | We need to pass the accepted issuing authority of the VC being requested. That could be configured in appsettings.json, etc, but that would limit the sample from being multi-tenant. This value is going to be passed as the `client_id` claim in the id_token_hint Entra ID passes in the /authorize call. |
 | Discovery Endpoint | URL to .well-known/openid-configuration | The sample expects that the Entra tenant ID is part of the URL |
 | App ID | guid	| EAM requires you to specify an App ID, so set any value. |
 
