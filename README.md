@@ -8,6 +8,7 @@ This repo contains a set of [Entra Verified ID](https://aka.ms/didfordevs) sampl
 | api-php | PHP sample for how to make a Entra Verified ID presentation request |
 | DidWebDomainProxy | did:web domain proxy sample. Enables you to get a real domain for your Verified ID authority |
 | VerifiedIDEAM | Sample for how to combine Entra Verified ID and Entra External Authentication Method to use Verified ID in Conditional Access. |
+| VerifiedID-SignalR | Sample that uses SignalR instead of polling to get request status. |
 
 
 ## Moved samples
