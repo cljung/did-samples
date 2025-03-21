@@ -1,0 +1,113 @@
+﻿@page
+@model AspNetCoreVerifiableCredentials.Pages.StationMonitorModel
+@{
+    ViewData["Title"] = "Station Monitor";
+}
+<div style="text-align: center;">
+
+    <h1 id="idTitle">Static Verifiable Credential Presentation</h1>
+    <h2 id="idSubTitle">Station @ViewData["stationId"] Monitor</h2>
+
+    <div id="message-wrapper" class="margin-bottom-75 margin-top-75" style="display: block">
+        <i class="fas fa-user-check green icon-text-large margin-bottom-25"></i>
+        <div id="message"></div>
+        <br />
+
+        <table id="events">
+            <thead>
+                <th style="width:25%">Time</th>
+                <th style="width:25%">Event</th>
+                <th style="width:25%">Id</th>
+                <th style="width:25%">Details</th>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+        <br />
+
+    </div>
+</div>
+
+<script src="signalr.js"></script>
+<script src="verifiedid.requestservice.client.signalr.js"></script>
+<script src="verifiedid.uihandler.js"></script>
+
+<script>
+
+    function addTableRow(tableId, col1, col2, col3) {
+        var tbodyRef = document.getElementById(tableId).getElementsByTagName('tbody')[0];
+        var row = tbodyRef.insertRow(0);
+        (row.insertCell(0)).innerHTML = col1;
+        (row.insertCell(1)).innerHTML = col2;
+        (row.insertCell(2)).innerHTML = col3;
+        return row;
+    }
+
+    function drawClaimsTable(row, claims) {
+        if (Object.keys(claims).length > 0) {
+            var idx = 0;
+            var imgSrc = null;
+            var text = "";
+            for (idx = Object.keys(claims).length - 1; idx >= 0; idx--) {
+                var claimName = Object.keys(claims)[idx];
+                var claimValue = claims[Object.keys(claims)[idx]];
+                if (claimName == "photo" || claimName == "picture" || claimValue.startsWith("_9") ) {
+                    imgSrc = "data:image/*;base64," + decodeURI(claimValue).replaceAll("_", "/").replaceAll("-", "+");
+                } else {
+                    if ( text == "" )
+                         text = claimValue;
+                    else text += ", " + claimValue;
+                }
+            }
+            if ( imgSrc != null ) {
+                text += "<br/><img width=100 src='" + imgSrc + "'>"
+            }
+            (row.insertCell(3)).innerHTML = text;
+        }
+    }
+
+    requestService.getRequestStatus = function getPresentationResult(requestId, requestStatus) {
+        fetch(`${requestService.apiPollPresentationRequest}?id=${requestId}`)
+            .then(response => response.text())
+            .catch(error => document.getElementById("message").innerHTML = error)
+            .then(response => {
+                if (response.length > 0) {
+                    console.log(response)
+                    respMsg = JSON.parse(response);
+                    if (respMsg.status == 'presentation_verified') {
+                        var time = (new Date()).toISOString();
+                        var link = "<a href='presentationverified?id=" + requestId + "' target='_blank'>" + requestId + "</a>";
+                        var row = addTableRow( 'events', time, respMsg.type, link );
+                        drawClaimsTable(row, respMsg.payload[0].claims);
+                    }
+                }
+            })
+    }
+
+    function parseParms(str) {
+        var pieces = str.split("&"), data = {}, i, parts;
+        for (i = 0; i < pieces.length; i++) {
+            parts = pieces[i].split("=");
+            if (parts.length < 2) {
+                parts.push("");
+            }
+            data[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
+        }
+        return data;
+    }
+
+    window.onload = function () {
+        var stationId = parseParms(document.location.search.substring(1)).stationId;                
+        if (stationId) {
+            setTimeout( function() {
+                const response = fetch('/api/subscribeToStation/' + stationId, {
+                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-SignalR-ConnectionId': connection.connectionId },
+                    method: 'POST',
+                    body: '{}'
+                });
+            }, 2000);
+        }
+    }
+
+</script>

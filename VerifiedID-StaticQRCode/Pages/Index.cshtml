@@ -1,0 +1,55 @@
+﻿@page
+@model AspNetCoreVerifiableCredentials.Pages.VerifierModel
+@{
+    ViewData["Title"] = "Verifier";
+}
+<div style="text-align: center;">
+    <h1 id="idTitle">Static QR Code sample</h1>
+    <h3 id="idSubTitle">Credential type: @ViewData["CredentialType"]</h3>
+    <h3 id="idSub3Title">Accepted issuers: @string.Join(", ", (string[])ViewData["acceptedIssuers"])</h3>
+</div>
+<p />
+<div class="row p-1 align-items-center h-100 d-flex justify-content-center">
+    <div class="col-4">
+        <p>
+            This page uses a static QR code that stays the same forever which lets the user scan it at any time.
+            The request URI in the QR code points back to an API in the sample and not to Entra Verified ID.
+            <br/><br/>
+            When the Authenticator scans the QR code, it calls this API, which in turn makes a just-in-time API call
+            to Verified ID's Request Service API. The response is proxied to the Authenticator.
+            <br /><br />
+            When presentation of the credential occurs, the page redirects to the page that displays the claims, just as the other samples.
+        </p>
+    </div>
+    <div class="col-2" style="padding-right:50px">
+        <div id="qrcode" style="text-align:center;display:none"></div>
+        <div id="message-wrapper" class="margin-bottom-75">
+            <div id="message">@ViewData["Message"]</div>
+            <br />
+        </div>
+    </div>
+</div>
+
+<button type="button" id="verify-credential" class="button" style="display:none">Get Static QR Code</button>
+<button type="button" id="check-result" class="button" style="display:none">Check Result</button>
+
+<script src="qrcode.min.js"></script>
+<script src="signalr.js"></script>
+<script src="verifiedid.requestservice.client.signalr.js"></script>
+<script src="verifiedid.uihandler.js"></script>
+
+<script>
+    var qrcode = new QRCode("qrcode", { width: 150, height: 150 });
+
+    document.getElementById('verify-credential').addEventListener('click', () => {
+        createRequest();
+    });
+    function createRequest() {
+        requestService.apiCreatePresentationRequest = '/api/verifier/get-static-link';
+        requestService.createPresentationRequest();
+    }
+    requestService.onSignalRConnected = function (connectionId) {
+        createRequest();
+    }
+</script>
+

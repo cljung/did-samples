@@ -1,0 +1,84 @@
+﻿@page
+@model AspNetCoreVerifiableCredentials.Pages.StationModel
+@{
+    ViewData["Title"] = "Verifier";
+}
+<div style="text-align: center;">
+    <h1 id="idTitle">Static QR code at a station</h1>
+    <h3 id="idSubTitle">Credential type: @ViewData["CredentialType"]. Station @ViewData["stationId"]</h3>
+    <h3 id="idSub3Title">Accepted issuers: @string.Join(", ", (string[])ViewData["acceptedIssuers"])</h3>
+</div>
+<p/>
+<div class="row p-1 align-items-center h-100 d-flex justify-content-center">
+    <div class="col-4">
+        <p>
+            This page illustrates a static QR code that could be on a stand in a hotel reception, airport gate or similar.
+            The user scans the QR code to check in but the page does not change. Instead the Station Monitor page will receive 
+            the presentation event. The Station Monitor is intended for the person operating the hotel reception or airport gate.
+            The QR code could be printed on a sticker instead of displayed on the screen.
+            <br /><br />
+            This page uses a static QR code that stays the same forever which lets the user scan it at any time.
+            The request URI in the QR code points back to an API in the sample and not to Entra Verified ID.
+            <br /><br />
+            When the Authenticator scans the QR code, it calls this API, which in turn makes a just-in-time API call
+            to Verified ID's Request Service API. The response is proxied to the Authenticator.
+            <br /><br />
+            When presentation of the credential occurs, this page does nothing other than display the firstName/lastName momentarily.
+            The presentation event is shown in the Station Monitor list page.
+        </p>
+        <p>
+            <a id="stationMonitorLink" href="StationMonitor?stationId=@ViewData["stationId"]" target="_blank">Station Monitor: @ViewData["stationId"]</a><br />
+        </p>
+    </div>
+    <div class="col-2" style="padding-right:50px">
+        <div id="qrcode" style="text-align:center;display:none"></div>
+        <div id="message-wrapper" class="margin-bottom-75">
+            <div id="message">@ViewData["Message"]</div>
+            <br />
+        </div>
+    </div>
+</div>
+
+<button type="button" id="verify-credential" class="button" style="display:none">Get Static QR Code</button>
+<button type="button" id="check-result" class="button" style="display:none">Check Result</button>
+
+<script src="qrcode.min.js"></script>
+<script src="signalr.js"></script>
+<script src="verifiedid.requestservice.client.signalr.js"></script>
+<script src="verifiedid.uihandler.js"></script>
+
+<script>
+    var qrcode = new QRCode("qrcode", { width: 150, height: 150 });
+            
+    function createRequest() {
+        requestService.apiCreatePresentationRequest = '/api/verifier/get-static-link/' + @ViewData["stationId"];
+        requestService.createPresentationRequest();
+    }
+    requestService.onRequestRetrieved = function(requestType) {            
+        displayMessage("QR code scanned...");
+    }
+    requestService.onPresentationVerified = function(id, response) {
+        setTimeout( function() { displayMessage("Scan the QR code again when ready"); }, 10000 );
+        displayMessage("Presentation received. " + id + ": " + getClaimDetails( response.claims) );
+    }
+    requestService.onSignalRConnected = function (connectionId) {
+        createRequest();
+    }
+    function getClaimDetails(claims) {
+        var text = "";
+        if (Object.keys(claims).length > 0) {
+            var idx = 0;
+            for (idx = Object.keys(claims).length - 1; idx >= 0; idx--) {
+                var claimName = Object.keys(claims)[idx];
+                if (claimName == "firstName" || claimName == "lastName" || claimName == "displayName" || claimName == "name" ) {
+                    var claimValue = claims[Object.keys(claims)[idx]];
+                    if ( text == "" )
+                         text = claimValue;
+                    else text += ", " + claimValue;
+                }
+            }            
+        }
+        return text;
+    }
+
+</script>
