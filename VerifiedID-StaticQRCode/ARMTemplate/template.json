@@ -168,6 +168,10 @@
             {
               "name": "VerifiedID__acceptedIssuers",
               "value": "[parameters('acceptedIssuers')]"
+            },
+            {
+              "name": "VerifiedID__ManagedIdentity",
+              "value": "true"
             }
           ]
         }
