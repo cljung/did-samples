@@ -6,7 +6,7 @@ This code sample demonstrates two ways of using a static QR code.
 
 This code sample demonstrates two ways of using a static QR code. The QR code in Microsoft Entra Verified ID samples contains a URI for retriving a request from Verified ID. 
 That request was created with a call to [createPresentationRequest](https://learn.microsoft.com/en-us/entra/verified-id/presentation-request-api) API. A request created this way expires 
-after 5 minutes, meaning the user must scan it withing this timeframe. A static QR code have no expiry and can live forever.
+after 5 minutes, meaning the user must scan it withing this timeframe. A static QR code have no expiry and can live forever. It could even be printed on a sticker.
 
 This sample is a clone of the offical sample [1-asp-net-core-api-idtokenhint](https://github.com/Azure-Samples/active-directory-verifiable-credentials-dotnet/tree/main/1-asp-net-core-api-idtokenhint) 
 but it has been modified to use [SignalR](learn.microsoft.com/en-us/aspnet/core/tutorials/signalr) instead of the standard polling mechanism and in addition of using a static QR code.
@@ -93,7 +93,7 @@ happy as it was returned a proper request.
 
 ### VerifierCallback.cs
 
-The `get-static-link` endpoint generates the static QR code. It can be called with or without a `stationId`. It called with a `stationId`, it is appended to the request_uri.
+The `get-static-link` endpoint generates the static QR code. It can be called with or without a `stationId`. If called with a `stationId`, it is appended to the request_uri.
 
 ```CSharp
 [AllowAnonymous]
@@ -152,19 +152,13 @@ if (reqState.ContainsKey("stationId") && callback.requestStatus == presentationS
 
 ### Index.cshtml 
 
-The `Index` page calls the `get-static-link/` API (without `stationId`) to generate a static QR code. The QR code has no expiry and the scanning can happen  
-several hours after the page was loaded. Once you scan the QR code with the Authenticator, the page redirects to `PresentationVerified` page to display the 
-results. This page is very similar to the official samples with the 
+The `Index` page calls the `get-static-link/` API (without `stationId`) to generate a static QR code. The QR code has no expiry and the scanning can happen several hours after the page was loaded. Once you scan the QR code with the Authenticator, the page redirects to `PresentationVerified` page to display the results. This page is very similar to the official samples with the 
 
 ### Station.cshtml 
 
-The `Station` page generates a random `stationId` number and then calls the `get-static-link/{stationId}` API to generate a static QR code. The QR code stays 
-the same until you close or reload the page, but since it is a static QR code, you can scan it multiple times. Each presentation result in an update in the 
-`StationMonitor` page.
+The `Station` page generates a random `stationId` number and then calls the `get-static-link/{stationId}` API to generate a static QR code. The QR code stays the same until you close or reload the page, but since it is a static QR code, you can scan it multiple times. Each presentation result in an update in the `StationMonitor` page.
 
 ### StationMonitor.cshtml 
 
-`StationMonitor` page is opened via a link in the `Station` page. It starts off by subscribing to the stationId passed as a query string parameter. 
-Then it simply awaits SignalR broadcast events for its `stationId`. When an event is received, it calls the `request-status` API to retrieve the presentation 
-result and adds a row in the list.
+`StationMonitor` page is opened via a link in the `Station` page. It starts off by subscribing to the stationId passed as a query string parameter. Then it simply awaits SignalR broadcast events for its `stationId`. When an event is received, it calls the `request-status` API to retrieve the presentation result and adds a row in the list.
 

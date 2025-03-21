@@ -9,6 +9,7 @@ This repo contains a set of [Entra Verified ID](https://aka.ms/didfordevs) sampl
 | DidWebDomainProxy | did:web domain proxy sample. Enables you to get a real domain for your Verified ID authority |
 | VerifiedIDEAM | Sample for how to combine Entra Verified ID and Entra External Authentication Method to use Verified ID in Conditional Access. |
 | VerifiedID-SignalR | Sample that uses SignalR instead of polling to get request status. |
+| VerifiedID-StaticQRCode | Sample that uses SignalR and a static QR code. |
 | VerifiedID-ServiceBus | Sample that uses Azure ServiceBus to relay the Verified ID callbacks to the app. |
 | ServiceBusForwarder | ServiceBus forwarder app - use it with the above sample. |
 
